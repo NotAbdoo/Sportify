@@ -1,0 +1,178 @@
+﻿/* ==========================================================
+   1. CORE STRUCTURE (Sticky Footer Setup)
+   ========================================================== */
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--body-bg, #ffffff);
+    color: var(--text-color, #111111);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* This pushes the footer to the bottom of the screen on short pages */
+main {
+    flex: 1 0 auto;
+}
+
+footer {
+    flex-shrink: 0;
+    background-color: var(--footer-bg, #f8f9fa);
+    border-top: 1px solid var(--border-color, #eeeeee);
+}
+
+
+/* ==========================================================
+   2. DARK MODE VARIABLES (Triggered by your JS)
+   ========================================================== */
+:root {
+    --body-bg: #ffffff;
+    --text-color: #111111;
+    --footer-bg: #f8f9fa;
+    --border-color: #eeeeee;
+    --nav-bg: #ffffff;
+}
+
+/* When the 'dark-mode' class is added to the body */
+::deep .dark-mode {
+    --body-bg: #121212;
+    --text-color: #e0e0e0;
+    --footer-bg: #1a1a1a;
+    --border-color: #333333;
+    --nav-bg: #121212;
+}
+
+    ::deep .dark-mode .main-nav,
+    ::deep .dark-mode .mega-wrapper,
+    ::deep .dark-mode .search-popup-container {
+        background-color: var(--nav-bg) !important;
+        color: var(--text-color) !important;
+    }
+
+    ::deep .dark-mode a {
+        color: var(--text-color);
+    }
+
+
+/* ==========================================================
+   3. ANNOUNCEMENT BAR & TICKER ANIMATION
+   ========================================================== */
+.announcement-bar {
+    background-color: #dc1a2d; /* Sportify Brand Red */
+    color: #ffffff;
+    padding: 10px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    z-index: 100;
+}
+
+.announcement-track {
+    display: inline-block;
+    animation: ticker 25s linear infinite;
+}
+
+    .announcement-track:hover {
+        animation-play-state: paused; /* Pauses when user hovers */
+    }
+
+.announcement-item {
+    display: inline-block;
+    padding: 0 40px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.announcement-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: #fff;
+    border-radius: 50%;
+    margin-right: 15px;
+    vertical-align: middle;
+}
+
+@keyframes ticker {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+
+/* ==========================================================
+   4. NAVBAR & MEGA MENU BASE
+   ========================================================== */
+.main-nav {
+    position: sticky;
+    top: 0;
+    background-color: var(--nav-bg);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 999;
+    padding: 15px 0;
+}
+
+.nav-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Badge for Cart */
+.badge-count {
+    position: absolute;
+    top: -8px;
+    right: -10px;
+    background-color: #dc1a2d;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 50%;
+}
+
+
+/* ==========================================================
+   5. SEARCH POPUP OVERLAY
+   ========================================================== */
+.search-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+    .search-popup.is-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+.search-popup-container {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    background: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}

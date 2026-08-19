@@ -1,0 +1,154 @@
+@model List<Sportify.Models.UserMessage>
+@{
+    ViewData["Title"] = "User Messages - Admin";
+}
+
+<style>
+    .messages-panel {
+        background: #f8f8f8;
+        min-height: 100vh;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    .panel-subtitle {
+        color: #CC0000;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .panel-title {
+        font-size: 52px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .table-container {
+        background: #fff;
+        border-radius: 28px;
+        padding: 35px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .04);
+        border: 1px solid #f0f0f0;
+    }
+
+    .message-card {
+        border-bottom: 1px solid #eee;
+        padding: 25px 0;
+        transition: .3s ease;
+    }
+
+    .message-card:last-child {
+        border-bottom: none;
+    }
+
+    .sender-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #CC0000;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 18px;
+    }
+
+    .sender-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: #111;
+        margin-bottom: 2px;
+    }
+
+    .sender-email {
+        font-size: 14px;
+        color: #777;
+    }
+
+    .message-date {
+        font-size: 14px;
+        color: #aaa;
+    }
+
+    .message-text {
+        background: #fdfdfd;
+        border-left: 4px solid #CC0000;
+        padding: 15px 20px;
+        border-radius: 0 14px 14px 0;
+        font-size: 16px;
+        color: #444;
+        line-height: 1.6;
+        margin-top: 15px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: #aaa;
+    }
+</style>
+
+<section class="messages-panel">
+    <div class="container">
+        
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
+            <div>
+                <span class="panel-subtitle">Feedback & Inquiries</span>
+                <h1 class="panel-title mt-2">User Messages</h1>
+            </div>
+            <div>
+                <a asp-action="Dashboard" class="btn btn-danger px-4 py-2 rounded-3 me-2">Dashboard</a>
+                <a asp-action="Manage" class="btn btn-dark px-4 py-2 rounded-3">Manage Store</a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            @if (Model == null || !Model.Any())
+            {
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="mb-3">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <h3>No messages found</h3>
+                    <p class="text-muted">When users send messages through the contact page, they will show up here.</p>
+                </div>
+            }
+            else
+            {
+                <div class="messages-list">
+                    @foreach (var msg in Model)
+                    {
+                        var senderName = msg.User != null ? $"{msg.User.FirstName} {msg.User.LastName}" : "Unknown User";
+                        var senderEmail = msg.User?.Email ?? "—";
+                        var initials = (msg.User?.FirstName?.Length > 0 ? msg.User.FirstName[0].ToString() : "") + 
+                                       (msg.User?.LastName?.Length > 0 ? msg.User.LastName[0].ToString() : "");
+
+                        <div class="message-card">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="sender-avatar">
+                                        @initials.ToUpper()
+                                    </div>
+                                    <div>
+                                        <h5 class="sender-name">@senderName</h5>
+                                        <span class="sender-email">@senderEmail</span>
+                                    </div>
+                                </div>
+                                <span class="message-date">
+                                    @msg.CreatedAt.ToString("g")
+                                </span>
+                            </div>
+                            <div class="message-text">
+                                @msg.MessageText
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+    </div>
+</section>

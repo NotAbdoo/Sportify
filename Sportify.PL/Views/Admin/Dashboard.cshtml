@@ -1,0 +1,751 @@
+@model List<Sportify.Models.Order>
+@using Sportify.Confiuration.Enums
+
+@{
+    ViewData["Title"] = "Analytics - Admin";
+
+    // ── Revenue growth helpers ─────────────────────────────────────────────
+    decimal totalRevenue    = ViewBag.TotalRevenue     ?? 0m;
+    decimal thisMonthRev    = ViewBag.ThisMonthRevenue ?? 0m;
+    decimal lastMonthRev    = ViewBag.LastMonthRevenue ?? 0m;
+    int     thisMonthOrders = ViewBag.ThisMonthOrders  ?? 0;
+    int     lastMonthOrders = ViewBag.LastMonthOrders  ?? 0;
+
+    double revenueGrowth = lastMonthRev == 0
+        ? (thisMonthRev > 0 ? 100.0 : 0.0)
+        : Math.Round((double)((thisMonthRev - lastMonthRev) / lastMonthRev * 100), 1);
+
+    double ordersGrowth = lastMonthOrders == 0
+        ? (thisMonthOrders > 0 ? 100.0 : 0.0)
+        : Math.Round((double)((thisMonthOrders - lastMonthOrders) / (double)lastMonthOrders * 100), 1);
+
+    // ── Chart data ───────────────────────────────────────────────────
+    var chartLabels  = (List<string>)(ViewBag.ChartLabels   ?? new List<string>());
+    var chartOrders  = (List<int>)(ViewBag.ChartOrders      ?? new List<int>());
+    var chartRevenue = (List<decimal>)(ViewBag.ChartRevenue ?? new List<decimal>());
+}
+
+<style>
+    .admin-dashboard {
+        background: #f8f8f8;
+        min-height: 100vh;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    /* HEADER */
+    .dashboard-subtitle {
+        color: #CC0000; /* Primary Brand Color */
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .dashboard-title {
+        font-size: 52px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    /* BUTTONS */
+    .export-btn,
+    .view-btn {
+        height: 58px;
+        padding: 0 28px;
+        border: none;
+        border-radius: 18px;
+        background: #111;
+        color: #fff;
+        font-weight: 700;
+        transition: .3s ease;
+    }
+
+        .export-btn:hover,
+        .view-btn:hover {
+            background: #CC0000; /* Hover state using primary brand color */
+        }
+
+    /* STATS CARDS */
+    .stats-card {
+        background: #fff;
+        border-radius: 28px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .04);
+        transition: .3s ease;
+        height: 100%;
+    }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .stats-icon {
+        width: 65px;
+        height: 65px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+
+    /* Utility Colors for Data Distinction */
+    .red-bg {
+        background: #DC1A2D;
+    }
+
+    .blue-bg {
+        background: #0d6efd;
+    }
+
+    .green-bg {
+        background: #198754;
+    }
+
+    .dark-bg {
+        background: #111;
+    }
+
+    .stats-label {
+        display: block;
+        margin-top: 22px;
+        color: #777;
+        font-size: 15px;
+    }
+
+    .stats-number {
+        margin-top: 10px;
+        font-size: 42px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .stats-growth {
+        display: block;
+        margin-top: 10px;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .positive {
+        color: #198754;
+    }
+
+    .negative {
+        color: #DC1A2D;
+    }
+
+    /* DASHBOARD CARD */
+    .dashboard-card {
+        background: #fff;
+        border-radius: 28px;
+        padding: 35px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .04);
+        height: 100%;
+    }
+
+    .card-title {
+        color: #111;
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    .dashboard-select {
+        height: 52px;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        background: var(--surface-soft);
+        color: var(--text-color);
+        padding: 0 18px;
+        font-weight: 600;
+        outline: none;
+        cursor: pointer;
+    }
+
+    /* CHART GRAPH */
+    .chart-placeholder {
+        height: 350px;
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .chart-bars {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 18px;
+    }
+
+    .bar {
+        width: 100%;
+        border-radius: 18px 18px 0 0;
+        background: #d9d9d9;
+        transition: .3s ease;
+    }
+
+        .bar:hover,
+        .active-bar {
+            background: #CC0000; /* Bar highlight using brand color */
+        }
+
+    /* SPORTS BREAKDOWN */
+    .sport-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .sport-stat h6 {
+            margin-bottom: 5px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .sport-stat span {
+            color: #777;
+            font-size: 14px;
+        }
+
+    .progress-line {
+        width: 100%;
+        height: 10px;
+        background: #eee;
+        border-radius: 100px;
+        overflow: hidden;
+        margin-top: 12px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: #DC1A2D;
+    }
+
+    .blue-fill {
+        background: #0d6efd;
+    }
+
+    .green-fill {
+        background: #198754;
+    }
+
+    /* TABLE */
+    .admin-table {
+        margin: 0;
+    }
+
+        .admin-table thead th {
+            border: none;
+            color: var(--muted-text);
+            font-size: 14px;
+            font-weight: 700;
+            padding-bottom: 20px;
+        }
+
+        .admin-table tbody td {
+            padding: 22px 0;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+    /* STATUS BADGES */
+    .status {
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .status-Pending     { background: #fff4df; color: #ff9800; }
+    .status-Confirmed   { background: #e8f1ff; color: #0d6efd; }
+    .status-Processing  { background: #f0e8ff; color: #7c3aed; }
+    .status-Shipped     { background: #e8f1ff; color: #0d6efd; }
+    .status-Delivered   { background: #e9f9ef; color: #198754; }
+    .status-Cancelled   { background: #fde8e8; color: #DC1A2D; }
+    .status-Refunded    { background: #f5f5f5; color: #555;    }
+
+    .empty-orders {
+        text-align: center;
+        padding: 40px 0;
+        color: #aaa;
+        font-size: 15px;
+    }
+
+    /* MOBILE */
+    @@media(max-width:991px) {
+        .dashboard-title { font-size: 42px; }
+        .dashboard-card, .stats-card { padding: 25px; }
+    }
+</style>
+
+<section class="admin-dashboard">
+    <div class="container">
+
+        <!-- Header -->
+        <div class="dashboard-header mb-5">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <span class="dashboard-subtitle">ADMIN ANALYTICS</span>
+                    <h1 class="dashboard-title mt-2">Dashboard Statistics</h1>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button"
+                            class="export-btn"
+                            onclick="location.href='@Url.Action("Orders", "Admin")'">
+                        Manage Orders
+                    </button>
+                    <button type="button"
+                            class="export-btn"
+                            onclick="location.href='@Url.Action("GymManagement", "Admin")'">
+                        Gym Management
+                    </button>
+                    <button type="button"
+                            class="export-btn"
+                            onclick="location.href='@Url.Action("Messages", "Admin")'">
+                        User Messages
+                    </button>
+                    <button type="button" class="export-btn" onclick="window.print()">
+                        Export Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-4">
+
+            <!-- Total Products -->
+            <div class="col-md-6 col-xl-3">
+                <div class="stats-card">
+                    <div class="stats-icon red-bg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"></path>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                    </div>
+                    <span class="stats-label">Total Products</span>
+                    <h2 class="stats-number">@ViewBag.TotalProducts.ToString("N0")</h2>
+                    <span class="stats-label" style="margin-top:4px;font-size:13px;">
+                        @ViewBag.TotalBrands brand(s) &amp; @ViewBag.TotalCategories category(ies)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Total Orders -->
+            <div class="col-md-6 col-xl-3">
+                <div class="stats-card">
+                    <div class="stats-icon red-bg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                    </div>
+                    <span class="stats-label">Total Orders</span>
+                    <h2 class="stats-number">@ViewBag.TotalOrders.ToString("N0")</h2>
+                    @if (ordersGrowth >= 0)
+                    {
+                        <span class="stats-growth positive">+@ordersGrowth.ToString("F1")% vs last month</span>
+                    }
+                    else
+                    {
+                        <span class="stats-growth negative">@ordersGrowth.ToString("F1")% vs last month</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Revenue -->
+            <div class="col-md-6 col-xl-3">
+                <div class="stats-card">
+                    <div class="stats-icon green-bg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M12 1v22"></path>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                    <span class="stats-label">Total Revenue</span>
+                    <h2 class="stats-number">$@((totalRevenue / 1000m).ToString("F1"))K</h2>
+                    @if (revenueGrowth >= 0)
+                    {
+                        <span class="stats-growth positive">+@revenueGrowth.ToString("F1")% vs last month</span>
+                    }
+                    else
+                    {
+                        <span class="stats-growth negative">@revenueGrowth.ToString("F1")% vs last month</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Customers -->
+            <div class="col-md-6 col-xl-3">
+                <div class="stats-card">
+                    <div class="stats-icon dark-bg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <span class="stats-label">Total Customers</span>
+                    <h2 class="stats-number">@ViewBag.TotalUsers.ToString("N0")</h2>
+                    <span class="stats-label" style="margin-top:4px;font-size:13px;">Registered accounts</span>
+                </div>
+            </div>
+
+            <!-- Pending Gym Ads -->
+            <div class="col-md-6 col-xl-3">
+                <a asp-controller="Admin" asp-action="GymAds" class="text-decoration-none">
+                    <div class="stats-card" style="border-left:4px solid #CC0000;">
+                        <div class="stats-icon red-bg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                        </div>
+                        <span class="stats-label">Gym Ad Requests</span>
+                        <h2 class="stats-number" style="color:@(ViewBag.PendingGymAds > 0 ? "#CC0000" : "#111");">@(ViewBag.PendingGymAds?.ToString("N0") ?? "0")</h2>
+                        <span class="stats-label" style="margin-top:4px;font-size:13px;color:@(ViewBag.PendingGymAds > 0 ? "#CC0000" : "#888");">
+                            @(ViewBag.PendingGymAds > 0 ? "Pending approval" : "All reviewed")
+                        </span>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- ── Gym Management Quick Actions ───────────────────────────────── -->
+        <div class="row g-4 mt-1">
+
+            <div class="col-12">
+                <div class="gym-management-panel" style="background:#fff;border-radius:28px;padding:32px 36px;box-shadow:0 10px 40px rgba(0,0,0,.04);">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                        <div>
+                            <span style="font-size:13px;font-weight:700;letter-spacing:2px;color:#CC0000;text-transform:uppercase;">Gym Partnership</span>
+                            <h4 class="gym-management-title" style="font-size:22px;font-weight:700;color:#111;margin:6px 0 0;">Gym Management</h4>
+                        </div>
+                        @if (ViewBag.PendingGymAds != null && ViewBag.PendingGymAds > 0)
+                        {
+                            <span style="background:#fff0f0;color:#CC0000;border:1px solid #CC0000;border-radius:20px;padding:6px 18px;font-size:.85rem;font-weight:700;">
+                                @ViewBag.PendingGymAds pending request(s) need review
+                            </span>
+                        }
+                    </div>
+
+                    <div class="row g-3">
+
+                        <!-- Add Gym -->
+                        <div class="col-md-4">
+                            <a asp-controller="Admin" asp-action="AdminAddGym" class="text-decoration-none">
+                                <div class="gym-action-card gym-action-card-red" style="background:#CC0000;border-radius:20px;padding:28px;color:#fff;transition:.25s;cursor:pointer;"
+                                     onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 14px 36px rgba(204,0,0,.35)'"
+                                     onmouseout="this.style.transform='';this.style.boxShadow=''">
+                                    <div style="width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                        <svg width="26" height="26" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                                        </svg>
+                                    </div>
+                                    <h5 style="font-weight:800;margin-bottom:6px;font-size:1.1rem;">Add New Gym</h5>
+                                    <p style="opacity:.85;font-size:.88rem;margin:0;">Instantly publish a gym — no approval needed</p>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Manage Gyms -->
+                        <div class="col-md-4">
+                            <a asp-controller="Admin" asp-action="GymManagement" class="text-decoration-none">
+                                <div class="gym-action-card gym-action-card-dark" style="background:#111;border-radius:20px;padding:28px;color:#fff;transition:.25s;cursor:pointer;"
+                                     onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 14px 36px rgba(204,0,0,.25)';this.style.background='#CC0000'"
+                                     onmouseout="this.style.transform='';this.style.boxShadow='';this.style.background='#111'">
+                                    <div style="width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                        <svg width="26" height="26" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                                        </svg>
+                                    </div>
+                                    <h5 style="color:#fff;font-weight:800;margin-bottom:6px;font-size:1.1rem;">Manage Gyms</h5>
+                                    <p style="opacity:.85;font-size:.88rem;margin:0;">View all contracted gyms, owners &amp; details</p>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Review Requests -->
+                        <div class="col-md-4">
+                            <a asp-controller="Admin" asp-action="GymAds" class="text-decoration-none">
+                                <div class="gym-action-card gym-action-card-review" style="background:@(ViewBag.PendingGymAds > 0 ? "linear-gradient(135deg,#CC0000,#ff4444)" : "linear-gradient(135deg,#6c757d,#8d9aab)");border-radius:20px;padding:28px;color:#fff;transition:.25s;cursor:pointer;position:relative;"
+                                     onmouseover="this.style.transform='translateY(-4px)'"
+                                     onmouseout="this.style.transform=''">
+                                    @if (ViewBag.PendingGymAds != null && ViewBag.PendingGymAds > 0)
+                                    {
+                                        <div style="position:absolute;top:16px;right:16px;background:#fff;color:#CC0000;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;">
+                                            @ViewBag.PendingGymAds
+                                        </div>
+                                    }
+                                    <div style="width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                        <svg width="26" height="26" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                                        </svg>
+                                    </div>
+                                    <h5 style="font-weight:800;margin-bottom:6px;font-size:1.1rem;">Review Requests</h5>
+                                    <p style="opacity:.85;font-size:.88rem;margin:0;">
+                                        @(ViewBag.PendingGymAds > 0 ? $"{ViewBag.PendingGymAds} gym ad(s) awaiting approval" : "No pending gym ad requests")
+                                    </p>
+                                </div>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Chart + Breakdown -->
+        <div class="row g-4 mt-1">
+
+            <!-- Monthly Orders Chart -->
+            <div class="col-lg-8">
+                <div class="dashboard-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="card-title">Monthly Overview (Last 7 Months)</h4>
+                    </div>
+                    <div class="chart-placeholder" style="height:350px;">
+                        <canvas id="ordersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Status Breakdown (recent 5) -->
+            <div class="col-lg-4">
+                <div class="dashboard-card">
+                    <h4 class="card-title mb-4">Recent Order Statuses</h4>
+
+                    @{
+                        int rTotal      = Math.Max(Model?.Count ?? 1, 1);
+                        int rPending    = Model?.Count(o => o.Status == OrderStatus.Pending)   ?? 0;
+                        int rShipped    = Model?.Count(o => o.Status == OrderStatus.Shipped)   ?? 0;
+                        int rDelivered  = Model?.Count(o => o.Status == OrderStatus.Delivered) ?? 0;
+                    }
+
+                    <div class="sport-stat">
+                        <div>
+                            <h6>Pending</h6>
+                            <span>@rPending of last @(Model?.Count ?? 0)</span>
+                        </div>
+                        <strong>@(rPending * 100 / rTotal)%</strong>
+                    </div>
+                    <div class="progress-line">
+                        <div class="progress-fill" style="background:#ff9800;width:@(rPending * 100 / rTotal)%"></div>
+                    </div>
+
+                    <div class="sport-stat mt-4">
+                        <div>
+                            <h6>Shipped</h6>
+                            <span>@rShipped of last @(Model?.Count ?? 0)</span>
+                        </div>
+                        <strong>@(rShipped * 100 / rTotal)%</strong>
+                    </div>
+                    <div class="progress-line">
+                        <div class="progress-fill blue-fill" style="width:@(rShipped * 100 / rTotal)%"></div>
+                    </div>
+
+                    <div class="sport-stat mt-4">
+                        <div>
+                            <h6>Delivered</h6>
+                            <span>@rDelivered of last @(Model?.Count ?? 0)</span>
+                        </div>
+                        <strong>@(rDelivered * 100 / rTotal)%</strong>
+                    </div>
+                    <div class="progress-line">
+                        <div class="progress-fill green-fill" style="width:@(rDelivered * 100 / rTotal)%"></div>
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="text-center">
+                        <small class="text-muted">Based on the 5 most recent orders</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Recent Orders Table -->
+        <div class="dashboard-card mt-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <h4 class="card-title">Recent Orders</h4>
+                <a asp-controller="Admin" asp-action="Orders" class="view-btn text-decoration-none d-inline-flex align-items-center">
+                    View all orders
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table admin-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>First Product</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-orders">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24" class="mb-3 d-block mx-auto">
+                                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                        </svg>
+                                        No orders found in the database yet.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var order in Model)
+                            {
+                                var firstItem   = order.OrderItems?.FirstOrDefault();
+                                var productName = firstItem?.ProductVariant?.Product?.Name ?? "—";
+                                var customerName = order.User != null
+                                    ? $"{order.User.FirstName} {order.User.LastName}"
+                                    : $"User #{order.UserID}";
+                                var statusClass = $"status-{order.Status}";
+                                var extraItems  = (order.OrderItems?.Count ?? 0) - 1;
+
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            <h4 class="fw-bold mt-1 mb-0">
+                                                Order ID: #SP@(order.OrderId.ToString("0000"))
+                                            </h4>
+                                        </strong>
+                                    </td>
+                                    <td>@customerName</td>
+                                    <td>
+                                        @productName
+                                        @if (extraItems > 0)
+                                        {
+                                            <small class="text-muted"> +@extraItems more</small>
+                                        }
+                                    </td>
+                                    <td>@order.CreatedAt.ToString("dd MMM yyyy")</td>
+                                    <td><span class="status @statusClass">@order.Status</span></td>
+                                    <td><strong>$@order.PaymentAmount.ToString("F2")</strong></td>
+                                    <td class="text-end">
+                                        @if (order.Status == OrderStatus.Pending)
+                                        {
+                                            <form asp-controller="Admin" asp-action="CancelOrder" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@order.OrderId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px;font-weight:700" onclick="return confirm('Cancel order #SP@order.OrderId.ToString("D4")?')">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var labels  = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(chartLabels));
+            var orders  = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(chartOrders));
+            var revenue = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(chartRevenue.Select(r => (double)r).ToList()));
+
+            var ctx = document.getElementById('ordersChart');
+            if (!ctx) return;
+
+            var maxOrders = Math.max.apply(null, orders.length ? orders : [0]);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Orders',
+                            data: orders,
+                            backgroundColor: orders.map(function (v) {
+                                return v === maxOrders && v > 0 ? '#CC0000' : '#d9d9d9';
+                            }),
+                            borderRadius: 12,
+                            borderSkipped: false,
+                            yAxisID: 'yOrders'
+                        },
+                        {
+                            label: 'Revenue ($)',
+                            data: revenue,
+                            type: 'line',
+                            borderColor: '#DC1A2D',
+                            backgroundColor: 'rgba(220,26,45,0.08)',
+                            borderWidth: 2.5,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#DC1A2D',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'yRevenue'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { font: { weight: '600' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function (ctx) {
+                                    if (ctx.dataset.label === 'Revenue ($)')
+                                        return ' Revenue: $' + ctx.raw.toFixed(2);
+                                    return ' Orders: ' + ctx.raw;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        yOrders: {
+                            type: 'linear', position: 'left', beginAtZero: true,
+                            grid: { color: '#f1f1f1' },
+                            ticks: { precision: 0, font: { weight: '600' } }
+                        },
+                        yRevenue: {
+                            type: 'linear', position: 'right', beginAtZero: true,
+                            grid: { drawOnChartArea: false },
+                            ticks: {
+                                font: { weight: '600' },
+                                callback: function (v) { return '$' + v.toFixed(0); }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { weight: '600' } }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}

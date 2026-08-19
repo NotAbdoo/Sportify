@@ -1,0 +1,114 @@
+@model Sportify.Models.GymClass
+
+@{
+    ViewData["Title"] = "Edit Class - Sportify";
+    int gymId = ViewBag.GymId;
+    string gymName = ViewBag.GymName ?? "Your Gym";
+    var existingImages = (Model.ImageURLs ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
+}
+
+<style>
+    .form-header { background: #0a0a0a; padding:48px 0 36px; border-bottom:3px solid #CC0000; }
+    .form-header h1 { color:#fff; font-weight:800; }
+    .form-header p { color:rgba(255,255,255,.7); }
+    .form-card { border:none; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.1); padding:40px; }
+    .form-control { border-radius:10px; border:1.5px solid #e5e7eb; padding:12px 16px; transition:border-color .2s; }
+    .form-control:focus { border-color:#CC0000; box-shadow:0 0 0 3px rgba(204,0,0,.1); }
+    .form-label { font-weight:600; color:#2d3748; }
+    .submit-btn { background:#CC0000; color:#fff; border:none; border-radius:12px; padding:14px 32px; font-weight:700; width:100%; transition:.2s; }
+    .submit-btn:hover { background:#a80000; transform:translateY(-2px); box-shadow:0 8px 20px rgba(204,0,0,.4); }
+    .current-img { width:100px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #e5e7eb; }
+    .preview-grid { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .preview-img { width:100px; height:80px; object-fit:cover; border-radius:8px; border:2px dashed #CC0000; }
+</style>
+
+<div class="form-header">
+    <div class="container">
+        <a asp-controller="Gym" asp-action="ManageProfile" asp-route-gymId="@gymId" class="text-white opacity-75 text-decoration-none"> Back to @gymName</a>
+        <h1 class="mt-2">Edit Class</h1>
+        <p class="mb-0">Update your class details and photos</p>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="form-card">
+                    <form asp-controller="Gym" asp-action="EditClass" asp-route-id="@Model.GymClassId" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="GymAdId" value="@gymId" />
+
+                        <div class="mb-4">
+                            <label class="form-label">Class Name <span class="text-danger">*</span></label>
+                            <input type="text" name="ClassName" class="form-control" value="@Model.ClassName" required maxlength="100" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Description <span class="text-danger">*</span></label>
+                            <textarea name="Description" class="form-control" rows="4" required>@Model.Description</textarea>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Duration</label>
+                                <input type="text" name="Duration" class="form-control" value="@Model.Duration" placeholder="e.g. 60 min" maxlength="50" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Price / Membership</label>
+                                <input type="text" name="Price" class="form-control" value="@Model.Price" placeholder="e.g. 300 EGP/month" maxlength="100" />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Current Photos</label>
+                            @if (existingImages.Any())
+                            {
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    @foreach (var img in existingImages)
+                                    {
+                                        <img src="@img" class="current-img" alt="Class photo" />
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted small">No photos uploaded yet.</p>
+                            }
+                            <label class="form-label mt-2">Upload New Photos <span class="text-muted">(will replace current photos)</span></label>
+                            <input type="file" name="classImages" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif"
+                                   multiple onchange="previewImages(this)" />
+                            <div class="preview-grid" id="previewGrid"></div>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Save Changes</button>
+
+                        <a asp-controller="Gym" asp-action="ManageProfile" asp-route-gymId="@gymId"
+                           class="btn btn-outline-secondary w-100 mt-3 rounded-3 py-3 fw-semibold">
+                            Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function previewImages(input) {
+        const grid = document.getElementById('previewGrid');
+        grid.innerHTML = '';
+        if (input.files) {
+            [...input.files].forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-img';
+                    grid.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+</script>

@@ -1,0 +1,130 @@
+@model Sportify.Models.GymAd
+
+@{
+    ViewData["Title"] = "Post Gym Ad - Sportify";
+}
+
+<style>
+    .form-header { background:#0a0a0a; padding:50px 0 40px; position:relative; overflow:hidden; }
+    .form-header::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,#CC0000,transparent); }
+    .form-header h1 { color:#fff; font-weight:800; }
+    .form-header p { color:rgba(255,255,255,.7); }
+    .form-card { border:none; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.1); padding:40px; }
+    .form-control, .form-select, textarea {
+        border-radius:10px; border:1.5px solid #e5e7eb;
+        padding:12px 16px; font-size:.95rem; transition:border-color .2s;
+    }
+    .form-control:focus, .form-select:focus, textarea:focus {
+        border-color:#CC0000; box-shadow:0 0 0 3px rgba(204,0,0,.1);
+    }
+    .form-label { font-weight:600; color:#2d3748; margin-bottom:6px; }
+    .img-preview { width:100%; height:200px; object-fit:cover; border-radius:12px; display:none; margin-top:10px; }
+    .submit-btn {
+        background:#CC0000; color:#fff; border:none;
+        border-radius:12px; padding:14px 32px; font-weight:700; font-size:1rem;
+        width:100%; transition:.2s;
+    }
+    .submit-btn:hover { background:#a80000; transform:translateY(-2px); box-shadow:0 8px 20px rgba(204,0,0,.4); }
+    .info-note { background:#fff8f8; border-left:4px solid #CC0000; border-radius:8px; padding:14px 18px; font-size:.9rem; color:#3a0000; }
+    .back-btn {
+        display:block; width:100%; text-align:center;
+        background:transparent; color:#111; border:1.5px solid #ddd;
+        border-radius:12px; padding:13px; font-weight:700;
+        text-decoration:none; transition:.2s; margin-top:12px;
+    }
+    .back-btn:hover { border-color:#CC0000; color:#CC0000; }
+    .section-label { font-size:.75rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#CC0000; margin-bottom:12px; margin-top:24px; }
+</style>
+
+<div class="form-header">
+    <div class="container">
+        <a asp-controller="Gym" asp-action="MyAds" class="text-white opacity-75 text-decoration-none">← My Gym Ads</a>
+        <h1 class="mt-2"> Post Your Gym Ad</h1>
+        <p class="mb-0">Your ad will be reviewed by our team before going live</p>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="form-card">
+
+                    <div class="info-note mb-4">
+                         <strong>Admin Approval Required:</strong> Your gym ad will be reviewed before it appears in the Gyms directory. This usually takes up to 24 hours.
+                    </div>
+
+                    <form asp-controller="Gym" asp-action="Create" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="section-label">Basic Information</div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Gym Name <span class="text-danger">*</span></label>
+                            <input type="text" name="GymName" class="form-control" placeholder="e.g. FitZone Gym & Fitness" required maxlength="100">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Short Description <span class="text-danger">*</span></label>
+                            <textarea name="Description" class="form-control" rows="3"
+                                      placeholder="A brief overview shown on the listing card..." required></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">About Us <span class="text-muted">(optional — shown on gym profile page)</span></label>
+                            <textarea name="AboutUs" class="form-control" rows="4"
+                                      placeholder="Tell members about your gym's history, equipment, philosophy..."></textarea>
+                        </div>
+
+                        <div class="section-label">Contact & Location</div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Location / Address <span class="text-danger">*</span></label>
+                                <input type="text" name="Location" class="form-control" placeholder="e.g. 15 Tahrir St, Maadi, Cairo" required maxlength="255">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                <input type="text" name="ContactNumber" class="form-control" placeholder="e.g. 01012345678" required maxlength="15">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Working Hours</label>
+                                <input type="text" name="WorkingHours" class="form-control" placeholder="e.g. 6 AM – 11 PM" maxlength="100">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Website</label>
+                                <input type="url" name="Website" class="form-control" placeholder="https://...">
+                            </div>
+                        </div>
+
+                        <div class="section-label">Photo</div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Gym Photo <span class="text-muted">(optional, max 5MB)</span></label>
+                            <input type="file" name="gymImage" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif"
+                                   onchange="previewImg(this)">
+                            <img id="imgPreview" class="img-preview" src="" alt="Preview" />
+                        </div>
+
+                        <button type="submit" class="submit-btn"> Submit for Approval</button>
+                        <a asp-controller="Gym" asp-action="MyAds" class="back-btn">← Back to My Ads</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function previewImg(input) {
+        const preview = document.getElementById('imgPreview');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>

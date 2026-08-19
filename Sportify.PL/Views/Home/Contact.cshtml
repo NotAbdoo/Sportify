@@ -1,0 +1,125 @@
+@{
+    ViewData["Title"] = "Contact - Sportify";
+}
+
+<section class="py-5 bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <span class="text-uppercase fw-bold" style="color:#CC0000; letter-spacing:2px;">
+                Contact Us
+            </span>
+
+            <h1 class="fw-bold mt-3" style="font-size:56px;">
+                We Are Here To Help
+            </h1>
+
+            <p class="text-muted fs-5 mt-3">
+                Have a question about products, orders, or your account? Send us a message.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="bg-white rounded-4 shadow-sm p-4 p-md-5">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @{
+                        var isLoggedIn = Context.Session.GetInt32("UserID") != null;
+                        var userName = Context.Session.GetString("UserName") ?? "";
+                        var userEmail = Context.Session.GetString("UserEmail") ?? "";
+                        var nameParts = userName.Split(' ');
+                        var firstName = nameParts.Length > 0 ? nameParts[0] : "";
+                        var lastName = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : "";
+                    }
+
+                    @if (!isLoggedIn)
+                    {
+                        <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-4">
+                            <strong>Hello!</strong> You must be <a asp-controller="Account" asp-action="Login" class="alert-link text-decoration-underline">logged in</a> to submit a message to your account.
+                        </div>
+                    }
+
+                    <form asp-controller="Home" asp-action="Contact" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">First Name</label>
+                                <input type="text" class="form-control form-control-lg bg-light" value="@firstName" readonly placeholder="First Name">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Last Name</label>
+                                <input type="text" class="form-control form-control-lg bg-light" value="@lastName" readonly placeholder="Last Name">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Email</label>
+                                <input type="email" class="form-control form-control-lg bg-light" value="@userEmail" readonly placeholder="your@email.com">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Subject</label>
+                                <input type="text" class="form-control form-control-lg" placeholder="How can we help?" @(isLoggedIn ? "" : "disabled")>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Message</label>
+                                <textarea name="message" class="form-control" rows="6" placeholder="Write your message..." required @(isLoggedIn ? "" : "disabled")></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-dark px-5 py-3" @(isLoggedIn ? "" : "disabled")>
+                                    Send Message
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="bg-white rounded-4 shadow-sm p-4 p-md-5 h-100">
+                    <h3 class="fw-bold mb-4">Contact Information</h3>
+
+                    <div class="mb-4">
+                        <h5 class="fw-bold">Email</h5>
+                        <p class="text-muted mb-0">support@sportify.com</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="fw-bold">Phone</h5>
+                        <p class="text-muted mb-0">+20 111 029 6910</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="fw-bold">Address</h5>
+                        <p class="text-muted mb-0">
+                            Cairo, Egypt
+                        </p>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold">Working Hours</h5>
+                        <p class="text-muted mb-0">
+                            Saturday - Thursday<br>
+                            10:00 AM - 8:00 PM
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

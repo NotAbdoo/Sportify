@@ -1,0 +1,362 @@
+@model Order
+@{
+    ViewData["Title"] = "Secure Payment - Sportify";
+}
+
+<style>
+    .payment-page {
+        background: #f8f8f8;
+        min-height: 100vh;
+        padding: 60px 0;
+    }
+
+    .payment-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .payment-title-main {
+        font-size: 38px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .payment-card-box {
+        background: #fff;
+        border-radius: 28px;
+        padding: 40px;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, .04);
+        border: 1px solid #eee;
+    }
+
+    /* VIRTUAL CREDIT CARD STYLING */
+    .card-preview-wrapper {
+        perspective: 1000px;
+        margin-bottom: 40px;
+    }
+
+    .credit-card-preview {
+        width: 100%;
+        max-width: 400px;
+        height: 240px;
+        background: linear-gradient(135deg, #111 0%, #333 50%, #CC0000 100%);
+        border-radius: 20px;
+        padding: 30px;
+        color: #fff;
+        position: relative;
+        box-shadow: 0 15px 35px rgba(204, 0, 0, .25);
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .credit-card-preview::before {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 50%;
+        top: -150px;
+        right: -100px;
+    }
+
+    .card-chip {
+        width: 50px;
+        height: 38px;
+        background: linear-gradient(135deg, #f0d060 0%, #cc9900 100%);
+        border-radius: 8px;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .card-preview-number {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        margin-bottom: 25px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .card-preview-details {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .card-preview-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 4px;
+        letter-spacing: 1px;
+    }
+
+    .card-preview-val {
+        font-size: 15px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .form-control-payment {
+        height: 56px;
+        border-radius: 14px;
+        border: 2px solid #eee;
+        padding: 0 20px;
+        font-weight: 600;
+        transition: .25s ease;
+    }
+
+    .form-control-payment:focus {
+        border-color: #CC0000;
+        box-shadow: 0 0 0 4px rgba(204, 0, 0, 0.1);
+        outline: none;
+    }
+
+    .payment-submit-btn {
+        height: 60px;
+        background: #CC0000;
+        color: #fff;
+        border: none;
+        border-radius: 18px;
+        font-weight: 700;
+        font-size: 18px;
+        transition: .3s ease;
+        box-shadow: 0 8px 20px rgba(204, 0, 0, 0.2);
+    }
+
+    .payment-submit-btn:hover {
+        background: #111;
+        box-shadow: 0 8px 20px rgba(17, 17, 17, 0.2);
+    }
+
+    .order-summary-box {
+        background: #fdfdfd;
+        border: 1px dashed #ddd;
+        border-radius: 16px;
+        padding: 20px;
+    }
+</style>
+
+<section class="payment-page">
+    <div class="container payment-container">
+        
+        <div class="text-center mb-5">
+            <span class="text-uppercase text-danger fw-bold tracking-wider" style="letter-spacing:2px; font-size: 14px">Secure Gateway</span>
+            <h1 class="payment-title-main mt-2">Card Payment Details</h1>
+            <p class="text-muted">Enter your card details to complete your order instantly.</p>
+        </div>
+
+        <div class="row g-4">
+            
+            <!-- Left Side: Interactive Preview & Form -->
+            <div class="col-lg-7">
+                <div class="payment-card-box">
+                    
+                    <div class="card-preview-wrapper">
+                        <div class="credit-card-preview">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="card-chip"></div>
+                                <h4 class="fw-bold italic" style="font-family:'Outfit',sans-serif; letter-spacing: 1px;">SPORTIFY</h4>
+                            </div>
+                            <div class="card-preview-number" id="previewNumber">•••• •••• •••• ••••</div>
+                            <div class="card-preview-details">
+                                <div>
+                                    <div class="card-preview-label">Card Holder</div>
+                                    <div class="card-preview-val" id="previewName">YOUR NAME</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="card-preview-label">Expires</div>
+                                    <div class="card-preview-val" id="previewExpiry">MM/YY</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form asp-action="ProcessPayment" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.OrderId" />
+
+                        <!-- Form Validations summary -->
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger p-3 rounded-4 mb-4 small">
+                                <ul class="mb-0 ps-3">
+                                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                    {
+                                        <li>@error.ErrorMessage</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Cardholder Name</label>
+                            <input type="text" name="cardName" id="cardNameInput" class="form-control form-control-payment" placeholder="e.g. John Doe" required autocomplete="cc-name">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Card Number</label>
+                            <input type="text" name="cardNumber" id="cardNumberInput" class="form-control form-control-payment" placeholder="1234 5678 1234 5678" required autocomplete="cc-number" maxlength="19">
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Expiration Date</label>
+                                <input type="text" name="expiryDate" id="expiryInput" class="form-control form-control-payment" placeholder="MM/YY" required autocomplete="cc-exp" maxlength="5">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-uppercase text-muted">CVV</label>
+                                <input type="password" name="cvv" id="cvvInput" class="form-control form-control-payment" placeholder="123" required autocomplete="cc-csc" maxlength="3">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn payment-submit-btn w-100 mt-2">
+                            Pay $@Model.PaymentAmount.ToString("F2")
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- Right Side: Order Summary -->
+            <div class="col-lg-5">
+                <div class="payment-card-box">
+                    <h4 class="fw-bold mb-4">Order Summary</h4>
+                    
+                    <div class="order-summary-box mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Order ID:</span>
+                            <span class="fw-bold">#SP@(Model.OrderId.ToString("D4"))</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Date:</span>
+                            <span class="fw-semibold">@Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Payment:</span>
+                            <span class="badge bg-danger">Credit/Debit Card</span>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-3 mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">Items Overview</h6>
+                        @if (Model.OrderItems != null)
+                        {
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                @foreach (var item in Model.OrderItems)
+                                {
+                                    var variant = item.ProductVariant;
+                                    var product = variant?.Product;
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="small text-truncate" style="max-width: 200px;">
+                                            @if (product != null)
+                                            {
+                                                <span>@product.Name</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Item #@item.ProductVariantID</span>
+                                            }
+                                            <span class="text-muted"> (x@item.Quantity)</span>
+                                        </div>
+                                        <strong class="small">$@((variant?.Price * item.Quantity)?.ToString("F2") ?? "0.00")</strong>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fs-5 fw-bold">Total Amount:</span>
+                            <strong class="fs-4 text-danger">$@Model.PaymentAmount.ToString("F2")</strong>
+                        </div>
+                    </div>
+
+                    <!-- Security assurances -->
+                    <div class="text-center text-muted small mt-4 pt-3 border-top">
+                        <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+                            <span>🔒</span>
+                            <strong class="text-dark">256-bit SSL Secure Checkout</strong>
+                        </div>
+                        <p class="mb-0">Your payment info is encrypted and processed securely. We never store your full card details.</p>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const cardNameInput = document.getElementById('cardNameInput');
+            const cardNumberInput = document.getElementById('cardNumberInput');
+            const expiryInput = document.getElementById('expiryInput');
+            const cvvInput = document.getElementById('cvvInput');
+
+            const previewName = document.getElementById('previewName');
+            const previewNumber = document.getElementById('previewNumber');
+            const previewExpiry = document.getElementById('previewExpiry');
+
+            // Name preview handler
+            cardNameInput.addEventListener('input', function () {
+                previewName.textContent = this.value.toUpperCase() || 'YOUR NAME';
+            });
+
+            // Card number formatting and preview handler
+            cardNumberInput.addEventListener('input', function (e) {
+                let val = this.value.replace(/\D/g, ''); // Numbers only
+                val = val.substring(0, 16); // Max 16 digits
+                
+                // Format with spaces: 0000 0000 0000 0000
+                let formatted = '';
+                for (let i = 0; i < val.length; i++) {
+                    if (i > 0 && i % 4 === 0) {
+                        formatted += ' ';
+                    }
+                    formatted += val[i];
+                }
+                this.value = formatted;
+
+                // Update card preview
+                let previewVal = formatted;
+                // Pad the rest with dots
+                let remaining = 16 - val.length;
+                let dotBlocks = '';
+                for (let i = val.length; i < 16; i++) {
+                    if (i > 0 && i % 4 === 0) {
+                        dotBlocks += ' ';
+                    }
+                    dotBlocks += '•';
+                }
+                previewNumber.textContent = previewVal + dotBlocks;
+            });
+
+            // Expiration date MM/YY formatting and preview handler
+            expiryInput.addEventListener('input', function (e) {
+                let val = this.value.replace(/\D/g, ''); // Numbers only
+                val = val.substring(0, 4); // Max 4 digits (MMYY)
+
+                let formatted = '';
+                if (val.length > 2) {
+                    formatted = val.substring(0, 2) + '/' + val.substring(2);
+                } else {
+                    formatted = val;
+                }
+                this.value = formatted;
+
+                previewExpiry.textContent = formatted || 'MM/YY';
+            });
+
+            // CVV input validation (only digits)
+            cvvInput.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '').substring(0, 3);
+            });
+        });
+    </script>
+}

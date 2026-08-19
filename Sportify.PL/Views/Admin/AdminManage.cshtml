@@ -1,0 +1,130 @@
+@using Sportify.Models
+@{
+    ViewData["Title"] = "Manage Store";
+    var products = ViewBag.Products as List<Product> ?? new();
+    var categories = ViewBag.Categories as List<Category> ?? new();
+    var brands = ViewBag.Brands as List<Brand> ?? new();
+}
+
+<section class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">Manage Store</h1>
+        <div class="d-flex gap-2">
+            <a asp-action="Dashboard" class="btn btn-danger">Admin Dashboard</a>
+            <a asp-action="Orders" class="btn btn-outline-dark">Manage Orders</a>
+            <a asp-action="Messages" class="btn btn-outline-dark">User Messages</a>
+            <a asp-action="AddProduct" class="btn btn-outline-dark">Add Product</a>
+            <a asp-action="AddCategory" class="btn btn-outline-dark">Add Category</a>
+            <a asp-action="AddBrand" class="btn btn-outline-dark">Add Brand</a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <h3 class="mt-4">Products</h3>
+    <table class="table table-bordered align-middle">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Brand</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                var variant = product.ProductVariants?.FirstOrDefault();
+
+                <tr>
+                    <td>
+                        <img src="@product.ImageURL.GetFirstImageUrl()" width="60" height="60" style="object-fit:cover" />
+                    </td>
+                    <td>@product.Name</td>
+                    <td>@product.Brand?.Name</td>
+                    <td>@product.Category?.Name</td>
+                    <td>@(variant == null ? "-" : variant.Price.ToString("0.00"))</td>
+                    <td>@(variant == null ? "-" : variant.StockQuantity)</td>
+                    <td class="text-end">
+                        <a asp-action="EditProduct" asp-route-id="@product.ProductID" class="btn btn-sm btn-primary">Edit</a>
+                        <form asp-action="DeleteProduct" asp-route-id="@product.ProductID" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this product?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3 class="mt-5">Categories</h3>
+    <table class="table table-bordered align-middle">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Parent</th>
+                <th>Description</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var category in categories)
+            {
+                <tr>
+                    <td>@category.Name</td>
+                    <td>@(category.ParentCategory?.Name ?? "-")</td>
+                    <td>@category.Description</td>
+                    <td class="text-end">
+                        <a asp-action="EditCategory" asp-route-id="@category.CategoryID" class="btn btn-sm btn-primary">Edit</a>
+                        <form asp-action="DeleteCategory" asp-route-id="@category.CategoryID" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this category?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3 class="mt-5">Brands</h3>
+    <table class="table table-bordered align-middle">
+        <thead>
+            <tr>
+                <th>Logo</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var brand in brands)
+            {
+                <tr>
+                    <td>
+                        <img src="@brand.LogoURL" width="60" height="60" style="object-fit:contain" />
+                    </td>
+                    <td>@brand.Name</td>
+                    <td>@brand.Description</td>
+                    <td class="text-end">
+                        <a asp-action="EditBrand" asp-route-id="@brand.BrandID" class="btn btn-sm btn-primary">Edit</a>
+                        <form asp-action="DeleteBrand" asp-route-id="@brand.BrandID" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this brand?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>

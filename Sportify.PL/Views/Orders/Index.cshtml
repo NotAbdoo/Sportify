@@ -1,0 +1,199 @@
+@model List<Order>
+@using Sportify.Confiuration.Enums
+@{
+    ViewData["Title"] = "My Orders - Sportify";
+}
+
+<style>
+    .orders-page {
+        background: #f8f8f8;
+        min-height: 100vh;
+        padding: 60px 0;
+    }
+
+    .orders-title {
+        font-size: 42px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .order-item-card {
+        background: #fff;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0,0,0,.03);
+        border: 1px solid #eee;
+        margin-bottom: 25px;
+    }
+
+    .status-badge {
+        padding: 8px 18px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .status-pending { background: #fff4df; color: #ff9800; }
+    .status-confirmed { background: #e8f1ff; color: #0d6efd; }
+    .status-processing { background: #f0e8ff; color: #7c3aed; }
+    .status-shipped { background: #e8f1ff; color: #0d6efd; }
+    .status-delivered { background: #e9f9ef; color: #198754; }
+    .status-cancelled { background: #fde8e8; color: #DC1A2D; }
+    .status-refunded { background: #f5f5f5; color: #555; }
+
+    .cancel-order-btn {
+        background: #fde8e8;
+        color: #DC1A2D;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        transition: .3s ease;
+    }
+
+    .cancel-order-btn:hover {
+        background: #DC1A2D;
+        color: #fff;
+    }
+
+    .empty-orders {
+        text-align: center;
+        padding: 80px 20px;
+        background: #fff;
+        border-radius: 24px;
+        border: 1px solid #eee;
+    }
+</style>
+
+<section class="orders-page">
+    <div class="container">
+        
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
+            <div>
+                <span class="text-uppercase text-muted fw-bold">My Account</span>
+                <h1 class="orders-title mt-2">Order History</h1>
+            </div>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-outline-dark px-4 py-2 rounded-3">
+                Continue Shopping
+            </a>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="empty-orders shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24" class="mb-3">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <h3 class="fw-bold">No orders found</h3>
+                <p class="text-muted">You haven't placed any orders with Sportify yet.</p>
+                <a asp-controller="Products" asp-action="Index" class="btn btn-dark mt-3 px-4 py-2 rounded-3">Shop Now</a>
+            </div>
+        }
+        else
+        {
+            <div class="orders-list">
+                @foreach (var order in Model)
+                {
+                    var statusClass = $"status-{order.Status.ToString().ToLower()}";
+
+                    <div class="order-item-card">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap border-bottom pb-4 mb-4 gap-3">
+                            <div>
+                                <span class="text-muted small">Order Date: @order.CreatedAt.ToString("f")</span>
+                                <h4 class="fw-bold mt-1 mb-0">
+                                    Order ID: #SP@(order.OrderId.ToString("0000"))
+                                </h4>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="status-badge @statusClass">@order.Status</span>
+                                
+                                @if (order.Status == OrderStatus.Pending)
+                                {
+                                    <form asp-action="Cancel" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@order.OrderId" />
+                                        <button type="submit" class="cancel-order-btn" onclick="return confirm('Are you sure you want to cancel this order?')">
+                                            Cancel Order
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="row g-4 align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex flex-column gap-3">
+                                    @foreach (var item in order.OrderItems)
+                                    {
+                                        var variant = item.ProductVariant;
+                                        var product = variant?.Product;
+
+                                        <div class="d-flex align-items-center gap-3">
+                                            @if (product != null)
+                                            {
+                                                <img src="@((variant?.ImageURL ?? product.ImageURL).GetFirstImageUrl())" alt="@product.Name" style="width:60px;height:60px;object-fit:cover;border-radius:8px;" />
+                                                <div>
+                                                    <div class="fw-bold">@product.Name</div>
+                                                    <div class="text-muted small">
+                                                        Size: @variant?.Size | Color: @variant?.Color | Qty: @item.Quantity
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="fw-bold">Product #@item.ProductVariantID</div>
+                                                <div class="text-muted small">Qty: @item.Quantity</div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 text-md-end border-start ps-md-4">
+                                <div class="text-muted small">Payment Method: @order.PaymentMethod</div>
+                                @if (order.PaidAt != null)
+                                {
+                                    <div class="text-success small fw-semibold mt-1">Paid at @order.PaidAt.Value.ToString("dd MMM yyyy")</div>
+                                }
+                                else if (order.PaymentMethod == "Card")
+                                {
+                                    <div class="text-danger small fw-bold mt-1">Unpaid</div>
+                                    <a asp-action="Payment" asp-route-id="@order.OrderId" class="btn btn-sm btn-danger mt-2 py-1 px-3" style="border-radius:8px;font-weight:700">Pay Now</a>
+                                }
+                                @if (order.FastShiping)
+                                {
+                                    <span class="badge bg-danger mt-1">Express Delivery</span>
+                                }
+                                <div class="mt-3">
+                                    <span class="text-muted small d-block">Total Amount:</span>
+                                    <strong class="fs-4 text-danger">$@order.PaymentAmount.ToString("0.00")</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+</section>

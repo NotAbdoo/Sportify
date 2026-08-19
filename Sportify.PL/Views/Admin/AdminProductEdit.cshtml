@@ -1,0 +1,250 @@
+@model Sportify.ViewModels.EditProductViewModel
+
+@{
+    ViewData["Title"] = "Edit Product";
+    var product = Model.Product;
+}
+
+<section class="container py-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <span class="text-uppercase text-muted fw-bold">Sportify Admin</span>
+            <h1 class="fw-bold mt-2">Edit Product</h1>
+        </div>
+
+        <a asp-controller="Admin" asp-action="Manage" class="btn btn-outline-dark">
+            Back To Manage
+        </a>
+    </div>
+
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible" role="alert">
+            @TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form asp-controller="Admin"
+          asp-action="EditProduct"
+          asp-route-id="@product.ProductID"
+          method="post"
+          enctype="multipart/form-data"
+          class="row g-4">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" name="ProductID" value="@product.ProductID" />
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4">Product Information</h4>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Product Name</label>
+                        <input name="Name" value="@product.Name" class="form-control form-control-lg" required />
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Brand</label>
+                            <select name="BrandID" class="form-select form-select-lg" required>
+                                @foreach (var brand in Model.Brands)
+                                {
+                                    <option value="@brand.BrandID" selected="@(brand.BrandID == product.BrandID)">
+                                        @brand.Name
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Category</label>
+                            <select name="CategoryID" class="form-select form-select-lg" required>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category.CategoryID" selected="@(category.CategoryID == product.CategoryID)">
+                                        @category.Name
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="Description" class="form-control" rows="5">@product.Description</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                        <h4 class="fw-bold mb-0">Variants</h4>
+
+                        <button type="button" class="btn btn-outline-dark" onclick="addNewVariantRow()">
+                            Add Variant
+                        </button>
+                    </div>
+
+                    <div id="variantsWrapper">
+                        @foreach (var variant in product.ProductVariants)
+                        {
+                            <div class="variant-row border rounded-3 p-3 mb-3">
+                                <input type="hidden" name="existingVariantIds" value="@variant.ProductVariantId" />
+
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold">Color</label>
+                                        <input type="text" name="existingVariantColors" value="@variant.Color" class="form-control" required />
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold">Size</label>
+                                        <input type="text" name="existingVariantSizes" value="@variant.Size" class="form-control" required />
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold">Price</label>
+                                        <input type="number" name="existingVariantPrices" value="@variant.Price" step="0.01" min="0" class="form-control" required />
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold">Stock</label>
+                                        <input type="number" name="existingVariantStockQuantities" value="@variant.StockQuantity" min="0" class="form-control" required />
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold">SKU</label>
+                                        <input type="text" name="existingVariantSkus" value="@variant.SKU" class="form-control" required />
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold">Replace Image</label>
+                                        <input type="file" name="existingVariantImages" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif" />
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <img src="@((variant.ImageURL ?? product.ImageURL).GetFirstImageUrl())"
+                                             class="img-fluid rounded border"
+                                             style="height:90px;width:100%;object-fit:cover;" />
+                                    </div>
+
+                                    <div class="col-md-10">
+                                        <button type="submit"
+                                                formaction="@Url.Action("DeleteVariant", "Admin", new { id = variant.ProductVariantId, productId = product.ProductID })"
+                                                formmethod="post"
+                                                class="btn btn-outline-danger"
+                                                onclick="return confirm('Delete this variant?')">
+                                            Delete Variant
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div id="newVariantsWrapper"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4">Main Product Image</h4>
+
+                    <img src="@(product.ImageURL.GetFirstImageUrl())"
+                         class="img-fluid rounded border mb-3"
+                         style="width:100%;height:280px;object-fit:cover;" />
+
+                    <input type="file"
+                           name="productImage"
+                           class="form-control"
+                           accept="image/png,image/jpeg,image/webp,image/gif" />
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <button type="submit" class="btn btn-dark w-100 py-3 fw-bold">
+                        Save Product Changes
+                    </button>
+
+                    <a asp-controller="Admin"
+                       asp-action="Manage"
+                       class="btn btn-outline-secondary w-100 py-3 mt-2">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <script>
+        function addNewVariantRow() {
+            const wrapper = document.getElementById("newVariantsWrapper");
+
+            const row = document.createElement("div");
+            row.className = "variant-row border rounded-3 p-3 mb-3";
+
+            row.innerHTML = `
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Color</label>
+                        <input type="text" name="newVariantColors" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Size</label>
+                        <input type="text" name="newVariantSizes" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Price</label>
+                        <input type="number" name="newVariantPrices" step="0.01" min="0" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Stock</label>
+                        <input type="number" name="newVariantStockQuantities" min="0" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">SKU</label>
+                        <input type="text" name="newVariantSkus" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Image</label>
+                        <input type="file" name="newVariantImages" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif" />
+                    </div>
+
+                    <div class="col-12">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                onclick="this.closest('.variant-row').remove()">
+                            Remove New Variant
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            wrapper.appendChild(row);
+        }
+    </script>
+}

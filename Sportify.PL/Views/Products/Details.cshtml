@@ -1,0 +1,624 @@
+@model Product
+
+@{
+    ViewData["Title"] = Model.Name + " - Sportify";
+
+    var firstVariant = Model.ProductVariants?.FirstOrDefault();
+    var reviews = Model.ProductReviews ?? new List<ProductReview>();
+    var reviewsCount = reviews.Count;
+    var averageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
+    var roundedRating = Math.Round(averageRating, 1);
+}
+
+<style>
+    .py-6 {
+        padding: 120px 0;
+    }
+
+    .product-hero {
+        background: #f8f8f8;
+    }
+
+    .main-product-image-wrapper {
+        border-radius: 35px;
+        background: #fff;
+        padding: 30px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, .06);
+    }
+
+    .main-product-image {
+        width: 100%;
+        height: 650px;
+        object-fit: cover;
+        border-radius: 24px;
+        transition: .4s ease;
+    }
+
+        .main-product-image:hover {
+            transform: scale(1.03);
+        }
+
+    .product-status-badge {
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        z-index: 2;
+        background: #CC0000;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .product-category-label {
+        color: #CC0000;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .product-main-title {
+        font-size: clamp(45px, 5vw, 72px);
+        line-height: 1;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .rating-stars {
+        color: #ffb400;
+        font-size: 22px;
+    }
+
+    .rating-count {
+        color: #666;
+    }
+
+    .stock-status {
+        color: #1fa94b;
+        font-weight: 600;
+    }
+
+    .out-stock-status {
+        color: #c62828;
+        font-weight: 600;
+    }
+
+    .new-price {
+        font-size: 48px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .product-description {
+        color: #666;
+        font-size: 18px;
+        line-height: 1.9;
+    }
+
+    .option-title {
+        color: #111;
+        font-weight: 700;
+        font-size: 18px;
+    }
+
+    .variant-select {
+        height: 56px;
+        border-radius: 16px;
+        border: 1px solid #ddd;
+        padding: 0 18px;
+        font-weight: 600;
+    }
+
+    .quantity-box {
+        background: #fff;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid #eee;
+    }
+
+    .qty-btn {
+        width: 55px;
+        height: 55px;
+        border: none;
+        background: #fff;
+        font-size: 24px;
+        font-weight: 700;
+        transition: .3s ease;
+    }
+
+        .qty-btn:hover {
+            background: #f5f5f5;
+        }
+
+    .qty-input {
+        width: 60px;
+        text-align: center;
+        border: none;
+        outline: none;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .add-cart-main-btn {
+        height: 58px;
+        padding: 0 50px;
+        border: none;
+        border-radius: 18px;
+        background: #CC0000;
+        color: #fff;
+        font-weight: 700;
+        font-size: 17px;
+        transition: .3s ease;
+    }
+
+        .add-cart-main-btn:hover {
+            background: #2a1e5c;
+            transform: translateY(-3px);
+        }
+
+    .feature-card {
+        background: #fff;
+        border-radius: 24px;
+        padding: 25px;
+        height: 100%;
+        border: 1px solid #f1f1f1;
+    }
+
+        .feature-card h6 {
+            color: #111;
+            font-weight: 700;
+        }
+
+        .feature-card p {
+            color: #777;
+            margin-top: 8px;
+        }
+
+    .section-subtitle {
+        color: #CC0000;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .section-title {
+        font-size: 58px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .details-text {
+        color: #666;
+        font-size: 19px;
+        line-height: 1.9;
+    }
+
+    .detail-item {
+        margin-bottom: 20px;
+        font-size: 18px;
+        color: #111;
+        font-weight: 500;
+    }
+
+    @@media(max-width:991px) {
+        .main-product-image {
+            height: 450px;
+        }
+
+        .product-main-title {
+            font-size: 48px;
+        }
+
+        .section-title {
+            font-size: 42px;
+        }
+    }
+</style>
+
+<section class="product-hero py-5">
+    <div class="container">
+        <div class="row align-items-center g-5">
+
+            <div class="col-lg-6">
+                <div class="main-product-image-wrapper position-relative overflow-hidden">
+                    <span class="product-status-badge">PRODUCT</span>
+
+                    <img id="mainProductImage"
+                         src="@Model.ImageURL.GetFirstImageUrl()"
+                         class="img-fluid main-product-image"
+                         alt="@Model.Name">
+                </div>
+
+                <!-- Thumbnails -->
+                <div id="productThumbnails" class="d-flex gap-2 mt-3 overflow-auto pb-2">
+                    @{
+                        var mainImagesList = Model.ImageURL.GetImageUrls();
+                    }
+                    @for (int idx = 0; idx < mainImagesList.Count; idx++)
+                    {
+                        var img = mainImagesList[idx];
+                        <img src="@img" 
+                             class="img-thumbnail thumbnail-btn @(idx == 0 ? "border-primary" : "")" 
+                             style="width:80px;height:80px;object-fit:cover;cursor:pointer;border-radius:8px;" 
+                             data-img-src="@img" />
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <form asp-controller="Cart" asp-action="Add" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <span class="product-category-label">
+                        @Model.Category?.Name
+                    </span>
+
+                    <h1 class="product-main-title mt-3">
+                        @Model.Name
+                    </h1>
+
+                    <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
+                        <div class="rating-stars text-warning fs-5">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                if (s <= Math.Round(averageRating))
+                                {
+                                    <span>★</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #ccc;">★</span>
+                                }
+                            }
+                        </div>
+                        <span class="rating-count">(@reviewsCount Reviews - Avg: @roundedRating.ToString("0.0"))</span>
+
+                        @if (firstVariant != null && firstVariant.StockQuantity > 0)
+                        {
+                            <span class="stock-status">In Stock</span>
+                        }
+                        else
+                        {
+                            <span class="out-stock-status">Out Of Stock</span>
+                        }
+                    </div>
+
+                    <div class="price-wrapper mt-4 d-flex align-items-center gap-3">
+                        <span class="new-price" id="variantPrice">
+                            @(firstVariant != null ? $"${firstVariant.Price}" : "No price")
+                        </span>
+                    </div>
+
+                    <p class="product-description mt-4">
+                        @Model.Description
+                    </p>
+
+                    @if (Model.Brand != null)
+                    {
+                        <p class="text-muted">
+                            Brand: <strong>@Model.Brand.Name</strong>
+                        </p>
+                    }
+
+                    @if (Model.ProductVariants != null && Model.ProductVariants.Any())
+                    {
+                        <div class="mt-5">
+                            <h6 class="option-title">Select Variant</h6>
+
+                            <select id="variantSelect"
+                                    name="productVariantId"
+                                    class="form-select variant-select mt-3">
+                                @foreach (var variant in Model.ProductVariants)
+                                {
+                                    <option value="@variant.ProductVariantId"
+                                            data-price="@variant.Price"
+                                            data-stock="@variant.StockQuantity"
+                                            data-images="@(variant.ImageURL ?? Model.ImageURL)">
+                                        Size @variant.Size - @variant.Color - $@variant.Price
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-3 mt-5 align-items-center">
+                            <div class="quantity-box d-flex align-items-center">
+                                <button type="button" class="qty-btn minus-btn">-</button>
+                                <input type="text"
+                                       name="quantity"
+                                       value="1"
+                                       class="qty-input"
+                                       id="qtyInput"
+                                       readonly>
+                                <button type="button" class="qty-btn plus-btn">+</button>
+                            </div>
+
+                            <button type="submit"
+                                    class="add-cart-main-btn"
+                                @(firstVariant != null && firstVariant.StockQuantity > 0 ? "" : "disabled")>
+                                Add To Cart
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mt-5">
+                            This product has no available variants.
+                        </div>
+                    }
+
+                </form>
+                <form asp-controller="Wishlist" asp-action="Add" method="post" class="mt-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@Model.ProductID" />
+
+                    <button type="submit" class="btn btn-outline-dark">
+                        Add To Wishlist
+                    </button>
+                </form>
+
+                <div class="product-features row mt-5">
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-card">
+                            <h6>Free Shipping</h6>
+                            <p>On orders over $100</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-card">
+                            <h6>Secure Payment</h6>
+                            <p>100% protected checkout</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-card">
+                            <h6>Easy Returns</h6>
+                            <p>30 day return policy</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-6 bg-white">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-6">
+                <span class="section-subtitle">PRODUCT DETAILS</span>
+                <h2 class="section-title mt-3">Performance And Comfort</h2>
+
+                <p class="details-text mt-4">
+                    @Model.Description
+                </p>
+
+                <div class="details-list mt-5">
+                    <div class="detail-item">Category: @Model.Category?.Name</div>
+                    <div class="detail-item">Brand: @Model.Brand?.Name</div>
+                    <div class="detail-item">Available Variants: @(Model.ProductVariants?.Count ?? 0)</div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <img src="@Model.ImageURL.GetFirstImageUrl()"
+                     class="img-fluid rounded-4 shadow"
+                     alt="@Model.Name">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light border-top">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Reviews List -->
+            <div class="col-lg-7">
+                <span class="section-subtitle text-uppercase text-muted fw-bold">Customer Reviews</span>
+                <h2 class="fw-bold mt-3 mb-4">What Our Customers Say</h2>
+
+                @if (!reviews.Any())
+                {
+                    <div class="alert alert-secondary py-4 rounded-4">
+                        No reviews yet for this product. Be the first to review!
+                    </div>
+                }
+                else
+                {
+                    <div class="reviews-list d-flex flex-column gap-4">
+                        @foreach (var review in reviews)
+                        {
+                            <div class="review-card bg-white p-4 rounded-4 shadow-sm border border-light">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                    <div>
+                                        <h5 class="fw-bold mb-1">@(review.User?.FirstName + " " + review.User?.LastName)</h5>
+                                        <div class="rating-stars text-warning fs-5">
+                                            @for (int s = 1; s <= 5; s++)
+                                            {
+                                                if (s <= review.Rating)
+                                                {
+                                                    <span>★</span>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color: #ccc;">★</span>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                    <span class="text-muted small">@review.CreatedAt.ToString("MMMM dd, yyyy")</span>
+                                </div>
+                                <p class="mb-0 text-secondary" style="font-size: 16px; line-height: 1.6;">@review.Comment</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Write a Review Form -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h3 class="fw-bold mb-4">Write a Review</h3>
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["Error"]</div>
+                    }
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["Success"]</div>
+                    }
+
+                    @if (Context.Session.GetInt32("UserID") != null)
+                    {
+                        var currentUserId = Context.Session.GetInt32("UserID") ?? 0;
+                        var existingUserReview = reviews.FirstOrDefault(r => r.UserID == currentUserId);
+
+                        <form asp-controller="Products" asp-action="AddReview" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@Model.ProductID" />
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-2">Your Rating</label>
+                                <div class="star-rating d-flex gap-2 fs-3 text-secondary">
+                                    <input type="hidden" name="rating" id="ratingInput" value="@(existingUserReview?.Rating ?? 5)" />
+                                    @for (int s = 1; s <= 5; s++)
+                                    {
+                                        <span class="star-picker-star cursor-pointer" data-value="@s" style="cursor: pointer; user-select: none;">★</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-2">Your Comment</label>
+                                <textarea name="comment" rows="4" class="form-control rounded-3" placeholder="Tell us about your experience with this product..." required>@(existingUserReview?.Comment)</textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-dark w-100 py-3 fw-bold rounded-3">
+                                @(existingUserReview != null ? "Update Review" : "Submit Review")
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <p class="text-muted">You must be logged in to leave a review.</p>
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-dark px-4 py-2">
+                                Log In
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const minusBtn = document.querySelector(".minus-btn");
+            const plusBtn = document.querySelector(".plus-btn");
+            const qtyInput = document.getElementById("qtyInput");
+            const variantSelect = document.getElementById("variantSelect");
+            const variantPrice = document.getElementById("variantPrice");
+            const mainProductImage = document.getElementById("mainProductImage");
+            const thumbnailsContainer = document.getElementById("productThumbnails");
+
+            if (plusBtn && qtyInput) {
+                plusBtn.addEventListener("click", function () {
+                    qtyInput.value = parseInt(qtyInput.value) + 1;
+                });
+            }
+
+            if (minusBtn && qtyInput) {
+                minusBtn.addEventListener("click", function () {
+                    if (parseInt(qtyInput.value) > 1) {
+                        qtyInput.value = parseInt(qtyInput.value) - 1;
+                    }
+                });
+            }
+
+            // Thumbnail switching logic
+            function setupThumbnailListeners() {
+                const thumbnailButtons = document.querySelectorAll(".thumbnail-btn");
+                thumbnailButtons.forEach(btn => {
+                    btn.addEventListener("click", function () {
+                        const targetSrc = this.getAttribute("data-img-src");
+                        if (mainProductImage && targetSrc) {
+                            mainProductImage.src = targetSrc;
+                            thumbnailButtons.forEach(b => b.classList.remove("border-primary"));
+                            this.classList.add("border-primary");
+                        }
+                    });
+                });
+            }
+
+            setupThumbnailListeners();
+
+            if (variantSelect && variantPrice) {
+                variantSelect.addEventListener("change", function () {
+                    const selected = variantSelect.options[variantSelect.selectedIndex];
+                    const price = selected.getAttribute("data-price");
+                    const imagesStr = selected.getAttribute("data-images");
+
+                    variantPrice.textContent = "$" + price;
+
+                    if (imagesStr && mainProductImage && thumbnailsContainer) {
+                        const images = imagesStr.split(';').filter(Boolean);
+                        if (images.length > 0) {
+                            mainProductImage.src = images[0];
+                            thumbnailsContainer.innerHTML = "";
+                            images.forEach((img, idx) => {
+                                const thumbnail = document.createElement("img");
+                                thumbnail.src = img;
+                                thumbnail.className = `img-thumbnail thumbnail-btn ${idx === 0 ? "border-primary" : ""}`;
+                                thumbnail.style.width = "80px";
+                                thumbnail.style.height = "80px";
+                                thumbnail.style.objectFit = "cover";
+                                thumbnail.style.cursor = "pointer";
+                                thumbnail.style.borderRadius = "8px";
+                                thumbnail.setAttribute("data-img-src", img);
+                                thumbnailsContainer.appendChild(thumbnail);
+                            });
+                            setupThumbnailListeners();
+                        }
+                    }
+                });
+            }
+
+            // Star Picker Logic
+            const starPickerStars = document.querySelectorAll(".star-picker-star");
+            const ratingInput = document.getElementById("ratingInput");
+
+            function updateStarDisplay(value) {
+                starPickerStars.forEach(star => {
+                    const val = parseInt(star.getAttribute("data-value"));
+                    if (val <= value) {
+                        star.classList.remove("text-secondary");
+                        star.classList.add("text-warning");
+                    } else {
+                        star.classList.remove("text-warning");
+                        star.classList.add("text-secondary");
+                    }
+                });
+            }
+
+            if (ratingInput && starPickerStars.length > 0) {
+                updateStarDisplay(parseInt(ratingInput.value));
+                starPickerStars.forEach(star => {
+                    star.addEventListener("click", function () {
+                        const val = parseInt(this.getAttribute("data-value"));
+                        ratingInput.value = val;
+                        updateStarDisplay(val);
+                    });
+                });
+            }
+        });
+    </script>
+}

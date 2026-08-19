@@ -1,0 +1,2 @@
+- [x] Update SaveImage in AdminController.cs to copy files to source wwwroot
+- [x] Verify build and execution

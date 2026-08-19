@@ -1,0 +1,169 @@
+@model List<Sportify.Models.GymAd>
+
+@{
+    ViewData["Title"] = "Gym Ad Requests - Admin";
+    int pendingCount = ViewBag.PendingCount ?? 0;
+}
+
+<style>
+    .page-header { background:#0a0a0a; padding:48px 0 36px; }
+    .page-header h1 { color:#fff; font-weight:800; }
+    .page-header p { color:rgba(255,255,255,.7); }
+    .pending-banner { background:#fff3cd; border:1px solid #ffc107; border-radius:16px; padding:20px 28px; }
+    .gym-row { border:none; border-radius:16px; box-shadow:0 2px 16px rgba(0,0,0,.06); padding:24px; margin-bottom:16px; transition:.2s; }
+    .gym-row:hover { box-shadow:0 6px 24px rgba(0,0,0,.12); }
+    .gym-row.pending { border-left:5px solid #ffc107; background:#fffdf0; }
+    .gym-row.approved { border-left:5px solid #CC0000; background:#fff8f8; }
+    .gym-thumb { width:80px; height:70px; object-fit:cover; border-radius:10px; flex-shrink:0; }
+    .gym-thumb-placeholder { width:80px; height:70px; background:#111; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.85rem; color:#fff; font-weight:700; }
+    .badge-pending { background:#fff3cd; color:#856404; border-radius:20px; padding:4px 14px; font-size:.82rem; font-weight:700; white-space:nowrap; }
+    .badge-approved { background:#111; color:#fff; border-radius:20px; padding:4px 14px; font-size:.82rem; font-weight:700; white-space:nowrap; }
+    .btn-approve { background:#CC0000; color:#fff; border:none; border-radius:10px; padding:8px 20px; font-weight:700; font-size:.9rem; transition:.2s; }
+    .btn-approve:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(204,0,0,.4); }
+    .btn-reject { background:transparent; color:#CC0000; border:2px solid #CC0000; border-radius:10px; padding:8px 20px; font-weight:700; font-size:.9rem; transition:.2s; }
+    .btn-reject:hover { background:#CC0000; color:#fff; transform:translateY(-2px); }
+    .tab-btn { border-radius:10px; font-weight:600; border:none; padding:8px 20px; background:#f0f0f0; color:#555; cursor:pointer; }
+    .tab-btn.active { background:#CC0000; color:#fff; }
+    .empty-state { text-align:center; padding:60px; color:#999; }
+</style>
+
+<div class="page-header">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <a asp-controller="Admin" asp-action="GymManagement" class="text-white opacity-75 text-decoration-none">← Gym Management</a>
+                <h1 class="mt-2 mb-1">Gym Ad Requests</h1>
+                <p class="mb-0">Review and approve gym listings submitted by Gym Owners</p>
+            </div>
+            @if (pendingCount > 0)
+            {
+                <div style="background:rgba(255,193,7,.2);border:1px solid rgba(255,193,7,.5);border-radius:16px;padding:14px 24px;color:#fff;">
+                    <span style="font-size:2rem;font-weight:800;">@pendingCount</span><br />
+                    <span style="font-size:.85rem;opacity:.85;">Awaiting Review</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Filter Tabs -->
+        <div class="d-flex gap-2 mb-4">
+            <button class="tab-btn active" onclick="filterGyms('all', this)">All (@Model.Count)</button>
+            <button class="tab-btn" onclick="filterGyms('pending', this)">Pending (@pendingCount)</button>
+            <button class="tab-btn" onclick="filterGyms('approved', this)">Approved (@(Model.Count - pendingCount))</button>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <div style="font-size:3rem;opacity:.3;font-weight:800;">—</div>
+                <h4 class="mt-3">No Gym Ad Requests Yet</h4>
+            </div>
+        }
+        else
+        {
+            <div id="gymList">
+                @foreach (var ad in Model)
+                {
+                    <div class="gym-row @(ad.IsApproved ? "approved" : "pending")"
+                         data-status="@(ad.IsApproved ? "approved" : "pending")">
+                        <div class="d-flex align-items-start gap-4 flex-wrap">
+                            <!-- Thumbnail -->
+                            @if (!string.IsNullOrEmpty(ad.ImageURL))
+                            {
+                                <img src="@ad.ImageURL.Split(';')[0]" class="gym-thumb" alt="@ad.GymName" />
+                            }
+                            else
+                            {
+                                <div class="gym-thumb-placeholder">GYM</div>
+                            }
+
+                            <!-- Info -->
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                    <h5 class="fw-bold mb-0">@ad.GymName</h5>
+                                    @if (ad.IsApproved)
+                                    {
+                                        <span class="badge-approved">Approved</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-pending">Pending Review</span>
+                                    }
+                                </div>
+
+                                <p class="text-muted small mb-1">@ad.Location &nbsp;|&nbsp; @ad.ContactNumber</p>
+                                <p class="text-muted small mb-2">
+                                    <strong>@ad.User?.FirstName @ad.User?.LastName</strong>
+                                    (@ad.User?.Email)
+                                </p>
+                                <p class="text-secondary mb-0" style="font-size:.88rem;max-width:600px;">
+                                    @(ad.Description?.Length > 150 ? ad.Description.Substring(0, 150) + "…" : ad.Description)
+                                </p>
+                                <p class="text-muted mt-1 mb-0" style="font-size:.8rem;">
+                                    Submitted: @ad.CreatedAt.ToString("MMM d, yyyy hh:mm tt")
+                                </p>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex flex-column gap-2 align-items-end">
+                                @if (!ad.IsApproved)
+                                {
+                                    <form asp-controller="Admin" asp-action="ApproveGymAd" asp-route-id="@ad.GymAdId" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-approve w-100">Approve</button>
+                                    </form>
+                                }
+                                <form asp-controller="Admin" asp-action="RejectGymAd" asp-route-id="@ad.GymAdId" method="post"
+                                      onsubmit="return confirm('Reject and permanently delete this gym ad?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-reject w-100">@(ad.IsApproved ? "Remove" : "Reject")</button>
+                                </form>
+                                @if (ad.IsApproved)
+                                {
+                                    <a asp-controller="Gym" asp-action="Profile" asp-route-id="@ad.GymAdId"
+                                       class="btn btn-sm btn-outline-secondary rounded-3 fw-semibold w-100">
+                                        View Page
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<script>
+    function filterGyms(status, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.gym-row').forEach(row => {
+            if (status === 'all' || row.dataset.status === status) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>

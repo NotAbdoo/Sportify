@@ -1,0 +1,75 @@
+@model Sportify.Models.GymOffer
+
+@{
+    ViewData["Title"] = "Add Offer - Sportify";
+    int gymId = ViewBag.GymId;
+    string gymName = ViewBag.GymName ?? "Your Gym";
+}
+
+<style>
+    .form-header { background:#0a0a0a; padding:48px 0 36px; border-bottom:3px solid #CC0000; }
+    .form-header h1 { color:#fff; font-weight:800; }
+    .form-header p { color:rgba(255,255,255,.7); }
+    .form-card { border:none; border-radius:20px; box-shadow:0 8px 40px rgba(0,0,0,.1); padding:40px; }
+    .form-control { border-radius:10px; border:1.5px solid #e5e7eb; padding:12px 16px; transition:border-color .2s; }
+    .form-control:focus { border-color:#CC0000; box-shadow:0 0 0 3px rgba(204,0,0,.1); }
+    .form-label { font-weight:600; color:#2d3748; }
+    .submit-btn { background:#CC0000; color:#fff; border:none; border-radius:12px; padding:14px 32px; font-weight:700; width:100%; transition:.2s; }
+    .submit-btn:hover { background:#a80000; transform:translateY(-2px); box-shadow:0 8px 20px rgba(204,0,0,.4); }
+    .offer-preview { background:linear-gradient(135deg,#fff9f0,#fff3e0); border-radius:16px; padding:24px; border:1.5px dashed #ffc107; }
+</style>
+
+<div class="form-header">
+    <div class="container">
+        <a asp-controller="Gym" asp-action="ManageProfile" asp-route-gymId="@gymId" class="text-white opacity-75 text-decoration-none">← Back to @gymName</a>
+        <h1 class="mt-2">Add Special Offer</h1>
+        <p class="mb-0">Create a promotion to attract more members to your gym</p>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="form-card">
+
+                    <form asp-controller="Gym" asp-action="AddOffer" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="GymAdId" value="@gymId" />
+
+                        <div class="mb-4">
+                            <label class="form-label">Offer Title <span class="text-danger">*</span></label>
+                            <input type="text" name="Title" class="form-control" placeholder="e.g. Summer Special, First Month Free…" required maxlength="150" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Offer Details <span class="text-danger">*</span></label>
+                            <textarea name="Description" class="form-control" rows="4"
+                                      placeholder="Describe what's included in this offer, terms and conditions…" required></textarea>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Discount / Label</label>
+                                <input type="text" name="DiscountText" class="form-control" placeholder="e.g. 30% OFF, Free Trial, BOGO" maxlength="50" />
+                                <small class="text-muted">This shows as a badge on the offer card</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Valid Until</label>
+                                <input type="date" name="ValidUntil" class="form-control" />
+                                <small class="text-muted">Leave empty for no expiry</small>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Publish Offer</button>
+
+                        <a asp-controller="Gym" asp-action="ManageProfile" asp-route-gymId="@gymId"
+                           class="btn btn-outline-secondary w-100 mt-3 rounded-3 py-3 fw-semibold">
+                            Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

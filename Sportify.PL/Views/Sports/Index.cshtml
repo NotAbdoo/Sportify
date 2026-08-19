@@ -1,0 +1,174 @@
+@model List<Category>
+
+@{
+    ViewData["Title"] = "Sports - Sportify";
+}
+
+<style>
+    .sports-page {
+        background: var(--surface-soft);
+        min-height: 100vh;
+        padding: 90px 0;
+    }
+
+    .page-subtitle {
+        color: #CC0000;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 14px;
+    }
+
+    .page-title {
+        font-size: 56px;
+        font-weight: 800;
+        color: var(--heading-color);
+    }
+
+    .sport-card {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        padding: 35px;
+        height: 100%;
+        text-align: center;
+        transition: .3s ease;
+    }
+
+        .sport-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, .08);
+            border-color: #CC0000;
+        }
+
+    .sport-icon-wrapper {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: var(--surface-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 25px;
+    }
+
+    .sport-icon {
+        max-width: 90px;
+        max-height: 90px;
+        object-fit: contain;
+    }
+
+    .sport-name {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--heading-color);
+    }
+
+    .sport-description {
+        color: var(--muted-text);
+        margin-top: 12px;
+        line-height: 1.7;
+    }
+
+    .sport-products-count {
+        color: #CC0000;
+        font-weight: 700;
+        margin-top: 16px;
+        display: block;
+    }
+
+    .shop-sport-btn {
+        display: inline-block;
+        margin-top: 24px;
+        background: #CC0000;
+        color: #fff;
+        padding: 12px 28px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-weight: 700;
+        transition: .3s ease;
+    }
+
+        .shop-sport-btn:hover {
+            background: #2a1e5c;
+            color: #fff;
+            transform: translateY(-3px);
+        }
+
+    .empty-state {
+        background: var(--surface-color);
+        border-radius: 24px;
+        padding: 50px;
+        text-align: center;
+        border: 1px solid var(--border-color);
+    }
+</style>
+
+<section class="sports-page">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="page-subtitle">TOP CATEGORIES</span>
+            <h1 class="page-title mt-3">Shop By Sport</h1>
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="empty-state">
+                <h3>No sports found</h3>
+                <p>Add sport categories from the admin panel first.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var sport in Model)
+                {
+                    <div class="col-md-6 col-lg-3">
+                        <div class="sport-card">
+                            <a asp-controller="Products" asp-action="ByCategory" asp-route-id="@sport.CategoryID" class="text-decoration-none text-dark">
+                                <div class="sport-icon-wrapper">
+                                    <img src="@GetSportIcon(sport.Name)"
+                                         class="sport-icon"
+                                         alt="@sport.Name">
+                                </div>
+
+                                <h3 class="sport-name">@sport.Name</h3>
+                            </a>
+
+                            <p class="sport-description">
+                                @sport.Description
+                            </p>
+
+                            <span class="sport-products-count">
+                                @(sport.Products?.Count ?? 0) Products
+                            </span>
+
+                            <a asp-controller="Products"
+                               asp-action="ByCategory"
+                               asp-route-id="@sport.CategoryID"
+                               class="shop-sport-btn">
+                                Shop Sport
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@functions {
+    private string GetSportIcon(string sportName)
+    {
+        return sportName.ToLower() switch
+        {
+            "football" => "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+            "basketball" => "https://cdn-icons-png.flaticon.com/512/889/889455.png",
+            "padel" => "https://www.svgrepo.com/show/315897/tennis-ball.svg",
+            "tennis" => "https://www.svgrepo.com/show/315897/tennis-ball.svg",
+            "gym" => "https://www.svgrepo.com/show/461254/dumbbell.svg",
+            "running" => "https://cdn-icons-png.flaticon.com/512/384/384276.png",
+            _ => "https://cdn-icons-png.flaticon.com/512/857/857455.png"
+        };
+    }
+}

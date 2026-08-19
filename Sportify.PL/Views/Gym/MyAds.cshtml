@@ -1,0 +1,170 @@
+@model List<Sportify.Models.GymAd>
+
+@{
+    ViewData["Title"] = "My Gym Ads - Sportify";
+}
+
+<style>
+    /* ── Header ─────────────────────────────────────── */
+    .myads-header { background:#0a0a0a; padding:50px 0 40px; position:relative; overflow:hidden; }
+    .myads-header::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,#CC0000,transparent); }
+    .myads-header h1 { color:#fff; font-weight:800; }
+    .myads-header p { color:rgba(255,255,255,.7); }
+
+    /* ── Cards ──────────────────────────────────────── */
+    .ad-card { border:none; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,.08); overflow:hidden; transition:transform .2s,box-shadow .2s; }
+    .ad-card:hover { transform:translateY(-5px); box-shadow:0 14px 40px rgba(0,0,0,.13); }
+    .ad-img { width:100%; height:180px; object-fit:cover; }
+    .ad-img-placeholder { width:100%; height:180px; background:#111; display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
+
+    /* ── Badges ─────────────────────────────────────── */
+    .status-badge-pending  { background:#fff3cd; color:#856404; border-radius:20px; padding:4px 12px; font-size:.8rem; font-weight:700; }
+    .status-badge-approved { background:#d4edda; color:#155724; border-radius:20px; padding:4px 12px; font-size:.8rem; font-weight:700; }
+
+    /* ── Action buttons — all brand colours ─────────── */
+    .btn-edit {
+        display:inline-flex; align-items:center; gap:5px;
+        background:#CC0000; color:#fff; border:none;
+        border-radius:8px; padding:7px 18px; font-size:.85rem; font-weight:700;
+        text-decoration:none; transition:.2s;
+    }
+    .btn-edit:hover { background:#a80000; color:#fff; transform:translateY(-2px); }
+
+    .btn-manage {
+        display:inline-flex; align-items:center; gap:5px;
+        background:#111; color:#fff; border:none;
+        border-radius:8px; padding:7px 18px; font-size:.85rem; font-weight:700;
+        text-decoration:none; transition:.2s;
+    }
+    .btn-manage:hover { background:#CC0000; color:#fff; transform:translateY(-2px); }
+
+    .btn-del {
+        display:inline-flex; align-items:center; gap:5px;
+        background:transparent; color:#CC0000; border:1.5px solid #CC0000;
+        border-radius:8px; padding:6px 14px; font-size:.85rem; font-weight:700; transition:.2s;
+    }
+    .btn-del:hover { background:#CC0000; color:#fff; }
+
+    /* ── Post / CTA button ──────────────────────────── */
+    .post-btn {
+        display:inline-flex; align-items:center; gap:8px;
+        background:#CC0000; color:#fff; border:none;
+        border-radius:12px; padding:12px 28px; font-weight:700;
+        text-decoration:none; transition:.2s;
+    }
+    .post-btn:hover { background:#a80000; color:#fff; transform:translateY(-2px); box-shadow:0 8px 20px rgba(204,0,0,.4); }
+
+    /* ── Empty state ────────────────────────────────── */
+    .empty-state { text-align:center; padding:80px 20px; color:#888; }
+</style>
+
+<div class="myads-header">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h1> My Gym Ads</h1>
+                <p class="mb-0">Manage your gym listings on Sportify</p>
+            </div>
+            <a asp-controller="Gym" asp-action="Create" class="post-btn">+ Post New Gym Ad</a>
+        </div>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <div style="font-size:5rem;opacity:.3;">🏋️</div>
+                <h3 class="mt-3 fw-bold">No Ads Yet</h3>
+                <p class="text-muted">Post your gym to reach thousands of athletes!</p>
+                <a asp-controller="Gym" asp-action="Create" class="post-btn mt-3">+ Post Your Gym</a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var ad in Model)
+                {
+                    <div class="col-lg-4 col-md-6">
+                        <div class="ad-card card h-100">
+                            @if (!string.IsNullOrEmpty(ad.ImageURL))
+                            {
+                                <img src="@ad.ImageURL.Split(';')[0]" alt="@ad.GymName" class="ad-img" />
+                            }
+                            else
+                            {
+                                <div class="ad-img-placeholder">🏋️</div>
+                            }
+                            <div class="card-body p-4 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="fw-bold mb-0">@ad.GymName</h5>
+                                    @if (ad.IsApproved)
+                                    {
+                                        <span class="status-badge-approved"> Approved</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge-pending"> Pending</span>
+                                    }
+                                </div>
+                                <p class="text-muted small mb-1">
+                                    <svg width="14" height="14" fill="none" stroke="#CC0000" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                        <circle cx="12" cy="10" r="3" />
+                                    </svg> @ad.Location
+                                </p>
+                                <p class="text-muted small mb-3">
+                                    <svg width="14" height="14" fill="none" stroke="#CC0000" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.14 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.05 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 18z" />
+                                    </svg> @ad.ContactNumber
+                                </p>
+                                <p class="text-secondary mb-4" style="font-size:.88rem;line-height:1.5;flex-grow:1;">
+                                    @(ad.Description?.Length > 100 ? ad.Description.Substring(0, 100) + "…" : ad.Description)
+                                </p>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a asp-controller="Gym" asp-action="Edit" asp-route-id="@ad.GymAdId" class="btn-edit"> Edit</a>
+                                    @if (ad.IsApproved)
+                                    {
+                                        <a asp-controller="Gym" asp-action="ManageProfile" asp-route-gymId="@ad.GymAdId" class="btn-manage">Manage</a>
+                                    }
+                                    <form asp-controller="Gym" asp-action="Delete" asp-route-id="@ad.GymAdId" method="post"
+                                          onsubmit="return confirm('Delete this gym ad?');" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-del">Remove</button>
+                                    </form>
+                                </div>
+
+                                <p class="text-muted mt-3 mb-0" style="font-size:.78rem;">
+                                    Posted: @ad.CreatedAt.ToString("MMM d, yyyy")
+                                    @if (!ad.IsApproved)
+                                    {
+                                        <span class="d-block mt-1" style="color:#856404;"> Awaiting admin approval.</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

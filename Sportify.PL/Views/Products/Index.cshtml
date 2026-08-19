@@ -1,0 +1,230 @@
+@model List<Product>
+
+@{
+    ViewData["Title"] = "Products - Sportify";
+}
+
+<style>
+    .products-page {
+        background: #f8f8f8;
+        min-height: 100vh;
+        padding: 90px 0;
+    }
+
+    .page-subtitle {
+        color: #CC0000;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 14px;
+    }
+
+    .page-title {
+        font-size: 56px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .product-card {
+        background: #fff;
+        border-radius: 28px;
+        overflow: hidden;
+        transition: .35s ease;
+        border: 1px solid #f0f0f0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, .08);
+        }
+
+    .product-image-wrapper {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .product-image {
+        width: 100%;
+        height: 340px;
+        object-fit: cover;
+        transition: .35s ease;
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.08);
+    }
+
+    .product-badge {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        background: #CC0000;
+        color: #fff;
+        padding: 8px 18px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .product-content {
+        padding: 28px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-category {
+        color: #999;
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 1px;
+    }
+
+    .product-title {
+        margin-top: 10px;
+        font-size: 24px;
+        color: #111;
+        font-weight: 600;
+    }
+
+    .product-price {
+        font-size: 24px;
+        font-weight: 700;
+        color: #CC0000;
+    }
+
+    .add-cart-btn {
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 50%;
+        background: #111;
+        color: #fff;
+        font-size: 24px;
+        transition: .3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .add-cart-btn:hover {
+            background: #CC0000;
+            transform: rotate(90deg);
+        }
+
+    .empty-state {
+        background: #fff;
+        border-radius: 24px;
+        padding: 50px;
+        text-align: center;
+        border: 1px solid #eee;
+    }
+
+        .empty-state h3 {
+            font-weight: 800;
+            color: #111;
+        }
+
+        .empty-state p {
+            color: #666;
+            margin-bottom: 0;
+        }
+
+    @@media (max-width: 991px) {
+        .page-title {
+            font-size: 42px;
+        }
+    }
+</style>
+
+<section class="products-page">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="page-subtitle">SHOP COLLECTION</span>
+            <h1 class="page-title mt-3">All Products</h1>
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="empty-state">
+                <h3>No products found</h3>
+                <p>Try adding products from the admin panel first.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var product in Model)
+                {
+                    var firstVariant = product.ProductVariants?.FirstOrDefault();
+
+                    <div class="col-md-6 col-lg-3">
+                        <div class="product-card">
+                            <div class="product-image-wrapper">
+                                <a asp-controller="Products"
+                                   asp-action="Details"
+                                   asp-route-id="@product.ProductID">
+                                    <img src="@product.ImageURL.GetFirstImageUrl()"
+                                         class="img-fluid product-image"
+                                         alt="@product.Name">
+                                </a>
+
+                                <span class="product-badge">
+                                    @(firstVariant != null && firstVariant.StockQuantity > 0 ? "IN STOCK" : "OUT")
+                                </span>
+                            </div>
+
+                            <div class="product-content">
+                                <span class="product-category">
+                                    @product.Category?.Name
+                                </span>
+
+                                <a asp-controller="Products"
+                                   asp-action="Details"
+                                   asp-route-id="@product.ProductID"
+                                   class="text-decoration-none">
+                                    <h5 class="product-title">@product.Name</h5>
+                                </a>
+
+                                @if (product.Brand != null)
+                                {
+                                    <span class="text-muted mt-2">
+                                        @product.Brand.Name
+                                    </span>
+                                }
+
+                                <div class="mt-auto pt-3">
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <span class="product-price">
+                                            @(firstVariant != null ? $"${firstVariant.Price}" : "No price")
+                                        </span>
+
+                                        @if (firstVariant != null && firstVariant.StockQuantity > 0)
+                                        {
+                                            <form asp-controller="Cart" asp-action="Add" method="post">
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden"
+                                                       name="productVariantId"
+                                                       value="@firstVariant.ProductVariantId" />
+
+                                                <input type="hidden"
+                                                       name="quantity"
+                                                       value="1" />
+
+                                                <button type="submit" class="add-cart-btn">+</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

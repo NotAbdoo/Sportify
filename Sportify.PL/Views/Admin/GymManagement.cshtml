@@ -1,0 +1,162 @@
+@model List<Sportify.Models.GymAd>
+
+@{
+    ViewData["Title"] = "Gym Management - Admin";
+    var totalGyms = Model.Count;
+    var adminGyms = Model.Count(g => g.IsAdminCreated);
+    var ownerGyms = Model.Count(g => !g.IsAdminCreated);
+}
+
+<style>
+    .page-header { background:#0a0a0a; padding:50px 0 40px; }
+    .page-header h1 { color:#fff; font-weight:800; }
+    .page-header p { color:rgba(255,255,255,.7); }
+    .stat-pill { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); border-radius:14px; padding:16px 24px; color:#fff; }
+    .stat-pill h3 { font-size:2rem; font-weight:800; margin:0; }
+    .stat-pill span { font-size:.85rem; opacity:.8; }
+    .add-btn { background:#CC0000; color:#fff; border:none; border-radius:12px; padding:11px 26px; font-weight:700; text-decoration:none; }
+    .add-btn:hover { transform:translateY(-2px); color:#fff; box-shadow:0 6px 16px rgba(204,0,0,.4); }
+    .gym-card { border:none; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,.07); overflow:hidden; transition:transform .2s,box-shadow .2s; }
+    .gym-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,.14); }
+    .gym-card-img { width:100%; height:180px; object-fit:cover; }
+    .gym-card-placeholder { width:100%; height:180px; background:#111; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:700; color:#fff; letter-spacing:1px; }
+    .badge-admin { background:#CC0000; color:#fff; border-radius:20px; padding:3px 12px; font-size:.78rem; font-weight:700; }
+    .badge-owner { background:#111; color:#fff; border-radius:20px; padding:3px 12px; font-size:.78rem; font-weight:700; }
+    .owner-info { background:#f8f9fa; border-radius:10px; padding:10px 14px; font-size:.85rem; }
+    .btn-view { background:#111; color:#fff; border:none; border-radius:8px; padding:6px 16px; font-size:.85rem; font-weight:600; text-decoration:none; }
+    .btn-view:hover { background:#333; color:#fff; }
+    .btn-del { background:#dc3545; color:#fff; border:none; border-radius:8px; padding:6px 16px; font-size:.85rem; font-weight:600; }
+    .btn-del:hover { background:#bb2d3b; }
+    .empty-state { text-align:center; padding:80px 20px; color:#888; }
+    .filter-tabs .nav-link { border-radius:10px; font-weight:600; color:#555; }
+    .filter-tabs .nav-link.active { background:#CC0000; color:#fff; }
+</style>
+
+<div class="page-header">
+    <div class="container">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-4">
+            <div>
+                <a asp-controller="Admin" asp-action="Dashboard" class="text-white opacity-75 text-decoration-none">← Dashboard</a>
+                <h1 class="mt-2 mb-1">Gym Management</h1>
+                <p class="mb-4">All contracted and registered gyms on Sportify</p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <div class="stat-pill">
+                        <h3>@totalGyms</h3>
+                        <span>Total Gyms</span>
+                    </div>
+                    <div class="stat-pill">
+                        <h3>@ownerGyms</h3>
+                        <span>Owner Listed</span>
+                    </div>
+                    <div class="stat-pill">
+                        <h3>@adminGyms</h3>
+                        <span>Admin Added</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex flex-column gap-2 align-items-end">
+                <a asp-controller="Admin" asp-action="AdminAddGym" class="add-btn">+ Add Gym</a>
+                <a asp-controller="Admin" asp-action="GymAds" class="btn btn-outline-light btn-sm rounded-3 fw-semibold mt-1">
+                    Review Pending Requests
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <div style="font-size:3rem;opacity:.3;font-weight:800;">—</div>
+                <h4 class="mt-3">No Gyms Yet</h4>
+                <p>Add the first gym or wait for Gym Owners to apply.</p>
+                <a asp-controller="Admin" asp-action="AdminAddGym" class="add-btn mt-3">+ Add Gym Now</a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var gym in Model)
+                {
+                    var classes = gym.GymClasses?.Count ?? 0;
+                    var offers = gym.GymOffers?.Count ?? 0;
+                    <div class="col-lg-4 col-md-6">
+                        <div class="gym-card card h-100">
+                            @if (!string.IsNullOrEmpty(gym.ImageURL))
+                            {
+                                <img src="@gym.ImageURL.Split(';')[0]" class="gym-card-img" alt="@gym.GymName" />
+                            }
+                            else
+                            {
+                                <div class="gym-card-placeholder">GYM</div>
+                            }
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="fw-bold mb-0">@gym.GymName</h5>
+                                    @if (gym.IsAdminCreated)
+                                    {
+                                        <span class="badge-admin">Admin</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-owner">Owner</span>
+                                    }
+                                </div>
+
+                                <p class="text-muted small mb-3">
+                                    @gym.Location
+                                </p>
+
+                                <!-- Owner Info -->
+                                <div class="owner-info mb-3">
+                                    <div class="fw-semibold small mb-1">Gym Owner / Contact</div>
+                                    <div class="text-muted small">
+                                        @gym.User?.FirstName @gym.User?.LastName<br />
+                                        @gym.User?.Email<br />
+                                        @gym.ContactNumber
+                                    </div>
+                                </div>
+
+                                <!-- Stats -->
+                                <div class="d-flex gap-2 mb-3">
+                                    <span class="badge bg-light text-dark fw-semibold">@classes Classes</span>
+                                    <span class="badge bg-light text-dark fw-semibold">@offers Offers</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(gym.WorkingHours))
+                                {
+                                    <p class="small text-muted mb-3">@gym.WorkingHours</p>
+                                }
+
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="Gym" asp-action="Profile" asp-route-id="@gym.GymAdId" class="btn-view flex-grow-1 text-center">
+                                        View Page
+                                    </a>
+                                    <form asp-controller="Admin" asp-action="AdminDeleteGym" asp-route-id="@gym.GymAdId" method="post"
+                                          onsubmit="return confirm('Remove @gym.GymName from Sportify?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-del">Delete</button>
+                                    </form>
+                                </div>
+
+                                <p class="text-muted mt-3 mb-0" style="font-size:.78rem;">
+                                    Listed @gym.CreatedAt.ToString("MMM d, yyyy")
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

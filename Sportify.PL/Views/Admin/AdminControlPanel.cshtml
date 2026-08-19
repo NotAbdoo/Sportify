@@ -1,0 +1,249 @@
+@model List<User>
+@{
+    ViewData["Title"] = "Dashboard - Admin";
+}
+
+<style>
+    .admin-home-page {
+        background: #f8f8f8;
+        min-height: 100vh;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    /* HEADER */
+    .admin-home-subtitle {
+        color: #CC0000; /* Primary Brand Color */
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .admin-home-title {
+        font-size: 62px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .admin-home-text {
+        max-width: 700px;
+        margin: auto;
+        color: #777;
+        font-size: 18px;
+        line-height: 1.9;
+    }
+
+    /* CARDS */
+    .admin-nav-card {
+        display: block;
+        background: #fff;
+        border-radius: 32px;
+        padding: 35px;
+        height: 100%;
+        transition: .35s ease;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .04);
+    }
+
+        .admin-nav-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, .08);
+        }
+
+    /* ICONS */
+    .nav-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+
+    .red-gradient {
+        background: linear-gradient(135deg, #DC1A2D, #ff4b5c);
+    }
+
+    .blue-gradient {
+        /* Updated to use primary brand color as the base of the gradient */
+        background: linear-gradient(135deg, #CC0000, #6b5cd1);
+    }
+
+    .green-gradient {
+        background: linear-gradient(135deg, #198754, #45c486);
+    }
+
+    .dark-gradient {
+        background: linear-gradient(135deg, #111, #444);
+    }
+
+    /* TEXT */
+    .nav-title {
+        color: #111;
+        font-size: 28px;
+        font-weight: 800;
+    }
+
+    .nav-text {
+        color: #777;
+        line-height: 1.8;
+        font-size: 16px;
+    }
+
+    .nav-link-btn {
+        display: inline-block;
+        margin-top: 25px;
+        color: #CC0000; /* Primary Brand Color */
+        font-weight: 700;
+        transition: .3s ease;
+    }
+
+    .admin-nav-card:hover .nav-link-btn {
+        transform: translateX(5px);
+    }
+
+    /* QUICK STATS */
+    .quick-stat-card {
+        background: #fff;
+        border-radius: 28px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .04);
+    }
+
+    .quick-stat-label {
+        color: #777;
+        font-size: 15px;
+    }
+
+    .quick-stat-number {
+        margin-top: 12px;
+        color: #111;
+        font-size: 46px;
+        font-weight: 800;
+    }
+
+    /* MOBILE ADJUSTMENTS */
+    @@media(max-width:991px) {
+        .admin-home-title {
+            font-size: 44px;
+        }
+
+        .admin-nav-card {
+            padding: 28px;
+        }
+    }
+</style>
+
+<section class="admin-home-page">
+    <div class="container">
+
+        <div class="admin-home-header text-center mb-5">
+            <span class="admin-home-subtitle">SPORTIFY ADMIN PANEL</span>
+            <h1 class="admin-home-title mt-3">Dashboard Navigation</h1>
+            <p class="admin-home-text mt-4">
+                Manage products, brands, analytics and all store operations
+                from one powerful admin dashboard.
+            </p>
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-md-6 col-xl-3">
+                <a asp-controller="Admin" asp-action="ProductAddition" class="admin-nav-card text-decoration-none">
+                    <div class="nav-icon red-gradient">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 3h18v18H3z"></path>
+                            <path d="M8 12h8"></path>
+                            <path d="M12 8v8"></path>
+                        </svg>
+                    </div>
+                    <h3 class="nav-title mt-4">Add Products</h3>
+                    <p class="nav-text mt-3">
+                        Create and manage products, pricing, stock, colors and sizes.
+                    </p>
+                    <span class="nav-link-btn">Open Page &rarr;</span>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <a asp-controller="Admin" asp-action="BrandAddition" class="admin-nav-card text-decoration-none">
+                    <div class="nav-icon blue-gradient">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M20 7h-9"></path>
+                            <path d="M14 17H5"></path>
+                            <circle cx="17" cy="17" r="3"></circle>
+                            <circle cx="7" cy="7" r="3"></circle>
+                        </svg>
+                    </div>
+                    <h3 class="nav-title mt-4">Add Brands</h3>
+                    <p class="nav-text mt-3">
+                        Upload brand logos, categories, social links and sports support.
+                    </p>
+                    <span class="nav-link-btn">Open Page &rarr;</span>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <a asp-controller="Admin" asp-action="CategoryAddition" class="admin-nav-card text-decoration-none">
+                    <div class="nav-icon dark-gradient">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M6 2l3 6"></path>
+                            <path d="M18 2l-3 6"></path>
+                            <path d="M3 10h18"></path>
+                            <path d="M5 10l1 10h12l1-10"></path>
+                        </svg>
+                    </div>
+                    <h3 class="nav-title mt-4">Add Category</h3>
+                    <p class="nav-text mt-3">
+                        Create and manage product categories, subcategories and attributes.
+                    </p>
+                    <span class="nav-link-btn">Open Page &rarr;</span>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <a asp-controller="Admin" asp-action="Manage" class="admin-nav-card text-decoration-none">
+                    <div class="nav-icon green-gradient">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 3v18h18"></path>
+                            <path d="M7 16l4-4 3 3 5-7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="nav-title mt-4">Manage Store</h3>
+                    <p class="nav-text mt-3">
+                        List products, categories and brands with edit and delete actions.
+                    </p>
+                    <span class="nav-link-btn">Open Page &rarr;</span>
+                </a>
+            </div>
+
+        </div>
+
+        <div class="row g-4 mt-4">
+
+            <div class="col-md-4">
+                <div class="quick-stat-card">
+                    <span class="quick-stat-label">Total Products</span>
+                    <h2 class="quick-stat-number">@ViewBag.TotalProducts</h2>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="quick-stat-card">
+                    <span class="quick-stat-label">Total Users</span>
+                    <h2 class="quick-stat-number">@Model.Count</h2>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="quick-stat-card">
+                    <span class="quick-stat-label">Total Orders</span>
+                    <h2 class="quick-stat-number">@ViewBag.TotalOrders</h2>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>

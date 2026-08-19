@@ -1,0 +1,390 @@
+@{
+    ViewData["Title"] = "Your Wishlist - Sportify";
+}
+
+<style>
+    .wishlist-page {
+        background: #f8f8f8;
+        min-height: 100vh;
+    }
+
+    /* HEADER */
+    .wishlist-header {
+        text-align: center;
+    }
+
+    .wishlist-subtitle {
+        color: #CC0000; /* Primary Brand Color */
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .wishlist-title {
+        font-size: 60px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .wishlist-text {
+        max-width: 650px;
+        margin: auto;
+        color: #777;
+        font-size: 18px;
+        line-height: 1.8;
+    }
+
+    /* CARD */
+    .wishlist-card {
+        position: relative;
+        background: #fff;
+        border-radius: 30px;
+        overflow: hidden;
+        transition: .35s ease;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .04);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .wishlist-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, .08);
+        }
+
+    /* IMAGE */
+    .wishlist-image-wrapper {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .wishlist-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        transition: .4s ease;
+    }
+
+    .wishlist-card:hover .wishlist-image {
+        transform: scale(1.05);
+    }
+
+    .wishlist-badge {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        background: #CC0000; /* Primary Brand Color */
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    /* REMOVE BUTTON */
+    .remove-btn {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 50%;
+        background: #fff;
+        color: #111;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: .3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+        .remove-btn:hover {
+            background: #CC0000; /* Primary Brand Color */
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+    /* CONTENT */
+    .wishlist-content {
+        padding: 28px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wishlist-category {
+        color: #999;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .wishlist-product-title {
+        margin-top: 12px;
+        color: #111;
+        font-size: 24px;
+        font-weight: 800;
+        text-decoration: none;
+        transition: 0.3s ease;
+    }
+
+        .wishlist-product-title:hover {
+            color: #CC0000;
+        }
+
+    .wishlist-price-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .wishlist-price {
+        color: #CC0000; /* Primary Brand Color */
+        font-size: 28px;
+        font-weight: 800;
+    }
+
+    .old-price {
+        color: #999;
+        text-decoration: line-through;
+        font-size: 18px;
+    }
+
+    /* BUTTON */
+    .wishlist-cart-btn,
+    .shop-btn {
+        width: 100%;
+        height: 58px;
+        border: none;
+        border-radius: 18px;
+        background: #111;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: .3s ease;
+        margin-top: auto; /* Pushes button to bottom */
+    }
+
+        .wishlist-cart-btn:hover,
+        .shop-btn:hover {
+            background: #CC0000; /* Primary Brand Color */
+            color: #fff;
+        }
+
+    /* EMPTY STATE */
+    .empty-wishlist {
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+        .empty-wishlist svg {
+            color: #CC0000; /* Primary Brand Color */
+        }
+
+        .empty-wishlist h2 {
+            color: #111;
+            font-size: 42px;
+            font-weight: 800;
+        }
+
+        .empty-wishlist p {
+            color: #777;
+            font-size: 18px;
+        }
+
+    .shop-btn {
+        max-width: 250px;
+        margin: 0 auto;
+    }
+
+    /* MOBILE */
+    @@media(max-width:991px) {
+        .wishlist-title {
+            font-size: 42px;
+        }
+
+        .wishlist-product-title {
+            font-size: 22px;
+        }
+    }
+</style>
+
+<section class="wishlist-page py-5">
+    <div class="container">
+
+        <div class="wishlist-header mb-5">
+            <span class="wishlist-subtitle">YOUR FAVORITES</span>
+            <h1 class="wishlist-title mt-3">Wishlist Collection</h1>
+            <p class="wishlist-text mt-4">
+                Save your favorite sports products and access them anytime.
+            </p>
+        </div>
+
+        <div class="row g-4" id="wishlistContainer">
+
+            <div class="col-md-6 col-xl-3 wishlist-item-wrapper">
+                <div class="wishlist-card">
+                    <button class="remove-btn" aria-label="Remove from wishlist">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M18 6L6 18"></path>
+                            <path d="M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <div class="wishlist-image-wrapper">
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="1">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop" class="wishlist-image" alt="Nike Air Max Pro">
+                        </a>
+                        <span class="wishlist-badge">-20%</span>
+                    </div>
+                    <div class="wishlist-content">
+                        <span class="wishlist-category">Running Shoes</span>
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="1" class="text-decoration-none">
+                            <h4 class="wishlist-product-title">Nike Air Max Pro</h4>
+                        </a>
+                        <div class="wishlist-price-box mb-4">
+                            <span class="wishlist-price">$149</span>
+                            <span class="old-price">$189</span>
+                        </div>
+                        <button class="wishlist-cart-btn" onclick="alert('Added to cart')">
+                            Add To Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3 wishlist-item-wrapper">
+                <div class="wishlist-card">
+                    <button class="remove-btn" aria-label="Remove from wishlist">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M18 6L6 18"></path>
+                            <path d="M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <div class="wishlist-image-wrapper">
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="2">
+                            <img src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=1200&auto=format&fit=crop" class="wishlist-image" alt="Adidas Court Vision">
+                        </a>
+                    </div>
+                    <div class="wishlist-content">
+                        <span class="wishlist-category">Basketball</span>
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="2" class="text-decoration-none">
+                            <h4 class="wishlist-product-title">Adidas Court Vision</h4>
+                        </a>
+                        <div class="wishlist-price-box mb-4">
+                            <span class="wishlist-price">$210</span>
+                        </div>
+                        <button class="wishlist-cart-btn" onclick="alert('Added to cart')">
+                            Add To Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3 wishlist-item-wrapper">
+                <div class="wishlist-card">
+                    <button class="remove-btn" aria-label="Remove from wishlist">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M18 6L6 18"></path>
+                            <path d="M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <div class="wishlist-image-wrapper">
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="3">
+                            <img src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=1200&auto=format&fit=crop" class="wishlist-image" alt="Puma Velocity Elite">
+                        </a>
+                        <span class="wishlist-badge">NEW</span>
+                    </div>
+                    <div class="wishlist-content">
+                        <span class="wishlist-category">Football</span>
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="3" class="text-decoration-none">
+                            <h4 class="wishlist-product-title">Puma Velocity Elite</h4>
+                        </a>
+                        <div class="wishlist-price-box mb-4">
+                            <span class="wishlist-price">$175</span>
+                        </div>
+                        <button class="wishlist-cart-btn" onclick="alert('Added to cart')">
+                            Add To Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3 wishlist-item-wrapper">
+                <div class="wishlist-card">
+                    <button class="remove-btn" aria-label="Remove from wishlist">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M18 6L6 18"></path>
+                            <path d="M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <div class="wishlist-image-wrapper">
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="4">
+                            <img src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1200&auto=format&fit=crop" class="wishlist-image" alt="Reebok Nano X">
+                        </a>
+                    </div>
+                    <div class="wishlist-content">
+                        <span class="wishlist-category">Training</span>
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="4" class="text-decoration-none">
+                            <h4 class="wishlist-product-title">Reebok Nano X</h4>
+                        </a>
+                        <div class="wishlist-price-box mb-4">
+                            <span class="wishlist-price">$132</span>
+                        </div>
+                        <button class="wishlist-cart-btn" onclick="alert('Added to cart')">
+                            Add To Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="empty-wishlist mt-5 d-none" id="emptyWishlist">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <h2 class="mt-4">Your Wishlist Is Empty</h2>
+            <p class="mt-3">Start adding your favorite products now.</p>
+            <a asp-controller="Products" asp-action="Index" class="shop-btn mt-4">
+                Explore Products
+            </a>
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const removeButtons = document.querySelectorAll('.remove-btn');
+            const emptyWishlist = document.getElementById('emptyWishlist');
+            const wishlistContainer = document.getElementById('wishlistContainer');
+
+            removeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove the parent column wrapper
+                    const cardWrapper = this.closest('.wishlist-item-wrapper');
+                    if(cardWrapper) {
+                        cardWrapper.remove();
+                    }
+
+                    // Check remaining items
+                    const remainingCards = document.querySelectorAll('.wishlist-item-wrapper');
+                    if (remainingCards.length === 0) {
+                        wishlistContainer.classList.add('d-none');
+                        emptyWishlist.classList.remove('d-none');
+                    }
+                });
+            });
+
+        });
+    </script>
+}

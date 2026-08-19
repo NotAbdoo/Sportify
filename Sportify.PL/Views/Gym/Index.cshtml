@@ -1,0 +1,354 @@
+@model List<Sportify.Models.GymAd>
+@using Microsoft.AspNetCore.Http
+
+@{
+    ViewData["Title"] = "Gyms - Sportify";
+    var userRole = Context.Session.GetString("UserRole");
+    var userId   = Context.Session.GetInt32("UserID");
+    var isLoggedIn = userId != null;
+}
+
+<style>
+    /* ─── Hero ──────────────────────────────────────────────────────────── */
+    .gyms-hero {
+        background: #0a0a0a;          /* pure deep black */
+        padding: 80px 0 60px;
+        position: relative;
+        overflow: hidden;
+    }
+    /* subtle white dot pattern */
+    .gyms-hero::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        pointer-events: none;
+    }
+    /* red accent glow bottom edge */
+    .gyms-hero::after {
+        content: '';
+        position: absolute; bottom: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #CC0000, transparent);
+    }
+    .gyms-hero h1 { color: #fff; font-size: 2.8rem; font-weight: 800; }
+    .gyms-hero p  { color: rgba(255,255,255,0.72); font-size: 1.1rem; }
+
+    /* ─── Hero Buttons ───────────────────────────────────────────────────── */
+    .hero-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #CC0000;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 13px 30px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .hero-btn:hover {
+        background: #a80000;
+        color: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 28px rgba(204,0,0,.45);
+    }
+    /* ghost variant for secondary action */
+    .hero-btn-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        color: #fff;
+        border: 2px solid rgba(255,255,255,.45);
+        border-radius: 12px;
+        padding: 11px 28px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: border-color .2s, background .2s, transform .2s;
+    }
+    .hero-btn-outline:hover {
+        border-color: #CC0000;
+        background: rgba(204,0,0,.12);
+        color: #fff;
+        transform: translateY(-3px);
+    }
+
+    /* ─── Listings ───────────────────────────────────────────────────────── */
+    .gym-card {
+        border: none;
+        border-radius: 18px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.08);
+        transition: transform .25s ease, box-shadow .25s ease;
+        overflow: hidden;
+    }
+    .gym-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 14px 44px rgba(0,0,0,.14);
+    }
+    .gym-card-img { width: 100%; height: 210px; object-fit: cover; }
+    .gym-card-img-placeholder {
+        width: 100%; height: 210px;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 3rem;
+    }
+    .gym-info-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #f8f9fa; border-radius: 20px;
+        padding: 5px 13px; font-size: .84rem; color: #555;
+        margin: 3px 3px;
+    }
+    .gym-info-pill svg { color: #CC0000; }
+
+    /* view-profile button on card */
+    .card-view-btn {
+        display: block;
+        width: 100%;
+        background: #0a0a0a;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 0;
+        font-weight: 700;
+        font-size: .92rem;
+        text-align: center;
+        text-decoration: none;
+        transition: background .2s, transform .2s;
+    }
+    .card-view-btn:hover {
+        background: #CC0000;
+        color: #fff;
+        transform: translateY(-2px);
+    }
+
+    /* ─── Login prompt ───────────────────────────────────────────────────── */
+    .login-prompt {
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 14px;
+        padding: 16px 26px;
+        color: rgba(255,255,255,.8);
+        font-size: .9rem;
+        display: inline-block;
+        margin-top: 6px;
+    }
+    .login-prompt a { color: #ff6b6b; font-weight: 700; text-decoration: none; }
+    .login-prompt a:hover { text-decoration: underline; }
+
+    /* ─── Empty state ────────────────────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 90px 20px; color: #888; }
+    .empty-state .icon { font-size: 5rem; margin-bottom: 20px; opacity: .35; }
+
+    /* ─── Section header ─────────────────────────────────────────────────── */
+    .section-eyebrow {
+        font-size: .75rem; font-weight: 800; letter-spacing: 2px;
+        text-transform: uppercase; color: #CC0000; display: block;
+        margin-bottom: 6px;
+    }
+    .section-heading {
+        font-size: 1.8rem; font-weight: 800; color: #111; margin: 0;
+    }
+</style>
+
+<!-- ══════════════════════════════ HERO ══════════════════════════════════ -->
+<div class="gyms-hero">
+    <div class="container text-center">
+
+        <h1> Find Your Perfect Gym</h1>
+        <p class="mb-5">Browse local gyms and fitness centres listed on Sportify</p>
+
+        <div class="d-flex flex-wrap gap-3 justify-content-center">
+
+            @if (userRole == "GymOwner")
+            {
+                <!-- GymOwner: both red buttons -->
+                <a asp-controller="Gym" asp-action="MyAds" class="hero-btn">
+                     My Gym Ads
+                </a>
+                <a asp-controller="Gym" asp-action="Create" class="hero-btn">
+                    + Post Your Gym
+                </a>
+                <a asp-controller="Home" asp-action="Index" class="hero-btn-outline">
+                     Back to Home
+                </a>
+            }
+            else if (userRole == "Admin")
+            {
+                <!-- Admin shortcuts -->
+                <a asp-controller="Admin" asp-action="GymManagement" class="hero-btn">
+                     Manage Gyms
+                </a>
+                <a asp-controller="Admin" asp-action="AdminAddGym" class="hero-btn">
+                    + Add New Gym
+                </a>
+                <a asp-controller="Admin" asp-action="GymAds" class="hero-btn-outline">
+                     Review Requests
+                </a>
+            }
+            else if (isLoggedIn)
+            {
+                <!-- Regular customer — browse only -->
+                <a asp-controller="Home" asp-action="Index" class="hero-btn-outline">
+                     Back to Home
+                </a>
+                <a asp-controller="Shop" asp-action="Index" class="hero-btn-outline">
+                     Shop Gear
+                </a>
+            }
+            else
+            {
+                <!-- Not logged in -->
+                <a asp-controller="Account" asp-action="Login" class="hero-btn">
+                     Sign In
+                </a>
+                <a asp-controller="Account" asp-action="Register" class="hero-btn-outline">
+                     Register as Gym Owner
+                </a>
+            }
+
+        </div>
+
+        @if (!isLoggedIn)
+        {
+            <div class="login-prompt mt-4">
+                 Own a gym? <a asp-controller="Account" asp-action="Register">Register as a Gym Owner</a> to list your gym here for free.
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ══════════════════════════════ LISTINGS ══════════════════════════════ -->
+<section class="py-5 bg-white">
+    <div class="container">
+
+        <!-- Section heading -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div>
+                <span class="section-eyebrow">Verified Gyms</span>
+                <h2 class="section-heading">All Listed Gyms</h2>
+            </div>
+            @if (Model != null && Model.Any())
+            {
+                <span class="text-muted fw-semibold">@Model.Count gym(s) found</span>
+            }
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="empty-state">
+                <div class="icon">🏋️</div>
+                <h3 class="fw-bold">No Gyms Listed Yet</h3>
+                <p class="text-muted">Be the first to list your gym on Sportify!</p>
+                @if (userRole == "GymOwner")
+                {
+                    <a asp-controller="Gym" asp-action="Create" class="hero-btn mt-3" style="font-size:.95rem;padding:11px 26px;">
+                        + Post Your Gym
+                    </a>
+                }
+                else if (!isLoggedIn)
+                {
+                    <a asp-controller="Account" asp-action="Login" class="hero-btn mt-3" style="font-size:.95rem;padding:11px 26px;">
+                         Sign In as Gym Owner
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var ad in Model)
+                {
+                    <div class="col-lg-4 col-md-6">
+                        <div class="gym-card card h-100">
+
+                            @if (!string.IsNullOrEmpty(ad.ImageURL))
+                            {
+                                <img src="@ad.ImageURL.Split(';')[0]" alt="@ad.GymName" class="gym-card-img" />
+                            }
+                            else
+                            {
+                                <div class="gym-card-img-placeholder">GYM</div>
+                            }
+
+                            <div class="card-body p-4 d-flex flex-column">
+                                <h5 class="fw-bold mb-1">@ad.GymName</h5>
+                                <p class="text-muted small mb-2">
+                                     Listed @ad.CreatedAt.ToString("MMM yyyy")
+                                </p>
+                                <p class="text-secondary mb-3" style="font-size:.9rem;line-height:1.65;flex-grow:1;">
+                                    @(ad.Description?.Length > 120 ? ad.Description.Substring(0, 120) + "…" : ad.Description)
+                                </p>
+
+                                <div class="mb-3">
+                                    <span class="gym-info-pill">
+                                        <svg width="14" height="14" fill="none" stroke="#CC0000" stroke-width="2" viewBox="0 0 24 24">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                            <circle cx="12" cy="10" r="3"/>
+                                        </svg>
+                                        @ad.Location
+                                    </span>
+                                    <span class="gym-info-pill">
+                                        <svg width="14" height="14" fill="none" stroke="#CC0000" stroke-width="2" viewBox="0 0 24 24">
+                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.14 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.05 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 18z"/>
+                                        </svg>
+                                        @ad.ContactNumber
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(ad.WorkingHours))
+                                    {
+                                        <span class="gym-info-pill"> @ad.WorkingHours</span>
+                                    }
+                                </div>
+
+                                <!-- Classes / Offers badges -->
+                                @{
+                                    var classCount = ad.GymClasses?.Count ?? 0;
+                                    var offerCount = ad.GymOffers?.Count ?? 0;
+                                }
+                                @if (classCount > 0 || offerCount > 0)
+                                {
+                                    <div class="d-flex gap-2 mb-3">
+                                        @if (classCount > 0)
+                                        {
+                                            <span class="badge" style="background:#0a0a0a;color:#fff;border-radius:8px;padding:5px 10px;font-size:.78rem;">
+                                                 @classCount Classes
+                                            </span>
+                                        }
+                                        @if (offerCount > 0)
+                                        {
+                                            <span class="badge" style="background:#CC0000;color:#fff;border-radius:8px;padding:5px 10px;font-size:.78rem;">
+                                                 @offerCount Offers
+                                            </span>
+                                        }
+                                    </div>
+                                }
+
+                                <a asp-controller="Gym" asp-action="Profile" asp-route-id="@ad.GymAdId"
+                                   class="card-view-btn">
+                                    View Gym Profile →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

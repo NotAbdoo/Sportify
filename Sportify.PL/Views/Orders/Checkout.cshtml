@@ -1,0 +1,287 @@
+@model ShippingAddress
+@using Sportify.Confiuration.Enums
+@{
+    ViewData["Title"] = "Checkout - Sportify";
+    var cartItems = ViewBag.CartItems as List<CartItem> ?? new();
+    decimal subtotal = cartItems.Sum(item => item.ProductVariant.Price * item.Quantity);
+    decimal shipping = subtotal > 0 && subtotal < 100 ? 10 : 0;
+    decimal total = subtotal + shipping;
+}
+
+<style>
+    .checkout-page {
+        background: #f8f8f8;
+        min-height: 100vh;
+        padding: 60px 0;
+    }
+
+    .checkout-header-title {
+        font-size: 42px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .checkout-card {
+        background: #fff;
+        border-radius: 24px;
+        padding: 35px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .03);
+        border: 1px solid #eee;
+    }
+
+    .form-section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #111;
+        margin-bottom: 25px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #eee;
+    }
+
+    .payment-option-card {
+        border: 2px solid #eee;
+        border-radius: 16px;
+        padding: 20px;
+        cursor: pointer;
+        transition: .3s ease;
+    }
+
+    .payment-option-card:hover {
+        border-color: #CC0000;
+    }
+
+    .payment-option-card input:checked + label {
+        color: #CC0000;
+    }
+
+    .payment-option-card input {
+        display: none;
+    }
+
+    .payment-option-card.active {
+        border-color: #CC0000;
+        background: #fdfcff;
+    }
+
+    .checkout-btn {
+        height: 60px;
+        border-radius: 18px;
+        background: #CC0000;
+        color: #fff;
+        font-weight: 700;
+        font-size: 18px;
+        border: none;
+        transition: .3s ease;
+    }
+
+    .checkout-btn:hover {
+        background: #2a1e5c;
+    }
+
+    .checkout-product-row {
+        border-bottom: 1px solid #eee;
+        padding: 15px 0;
+    }
+
+    .checkout-product-row:last-child {
+        border-bottom: none;
+    }
+</style>
+
+<section class="checkout-page">
+    <div class="container">
+        
+        <div class="mb-5">
+            <span class="text-uppercase text-muted fw-bold tracking-wider" style="letter-spacing:1px">Secure Checkout</span>
+            <h1 class="checkout-header-title mt-2">Complete Your Order</h1>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger mb-4">@TempData["Error"]</div>
+        }
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <form asp-action="Checkout" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="UserID" />
+                    <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+                    <div class="checkout-card mb-4">
+                        <h3 class="form-section-title">Shipping Address</h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Phone Number</label>
+                                <input type="text" asp-for="Phone" class="form-control form-control-lg" placeholder="e.g. 01110296910" required>
+                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Alternative Phone (Optional)</label>
+                                <input type="text" asp-for="AlternativePhone" class="form-control form-control-lg" placeholder="e.g. 01234567891">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Governorate</label>
+                                <select asp-for="Governorate" asp-items="Html.GetEnumSelectList<EgyptGovernorate>()" class="form-select form-select-lg" required>
+                                </select>
+                                <span asp-validation-for="Governorate" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">City</label>
+                                <input type="text" asp-for="City" class="form-control form-control-lg" placeholder="City / Town" required>
+                                <span asp-validation-for="City" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Area / District</label>
+                                <input type="text" asp-for="Area" class="form-control form-control-lg" placeholder="e.g. Heliopolis" required>
+                                <span asp-validation-for="Area" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Country</label>
+                                <select asp-for="Country" asp-items="Html.GetEnumSelectList<Countries>()" class="form-select form-select-lg bg-light" readonly>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Street Address</label>
+                                <input type="text" asp-for="Street" class="form-control form-control-lg" placeholder="Street Name, Building Name/No" required>
+                                <span asp-validation-for="Street" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Building No.</label>
+                                <input type="number" asp-for="Building" class="form-control form-control-lg" min="1" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Floor</label>
+                                <input type="number" asp-for="Floor" class="form-control form-control-lg" min="0" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Apartment No.</label>
+                                <input type="number" asp-for="Apartment" class="form-control form-control-lg" min="1" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Delivery Notes (Optional)</label>
+                                <textarea name="note" class="form-control" rows="3" placeholder="Special instructions for delivery..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkout-card">
+                        <h3 class="form-section-title">Payment & Shipping Mode</h3>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold mb-3">Select Payment Method</label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="payment-option-card active" onclick="selectPayment(this, 'Cash')">
+                                        <input type="radio" id="payCash" name="paymentMethod" value="Cash" checked>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="fs-4">💵</div>
+                                            <div>
+                                                <div class="fw-bold">Cash on Delivery</div>
+                                                <div class="text-muted small">Pay in cash when package arrives</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="payment-option-card" onclick="selectPayment(this, 'Card')">
+                                        <input type="radio" id="payCard" name="paymentMethod" value="Card">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div>
+                                                <div class="fw-bold">Credit/Debit Card</div>
+                                                <div class="text-muted small">Pay online securely</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 pt-3 border-top">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="fastShipping" name="fastShipping" value="true">
+                                <label class="form-check-label fw-semibold" for="fastShipping">
+                                    Express Fast Delivery (Ships next day!)
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn checkout-btn w-100 mt-3">
+                            Place Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="checkout-card">
+                    <h3 class="form-section-title">Order Items</h3>
+
+                    <div class="checkout-productsmb-4" style="max-height: 380px; overflow-y: auto;">
+                        @foreach (var item in cartItems)
+                        {
+                            var variant = item.ProductVariant;
+                            var product = variant.Product;
+                            <div class="checkout-product-row d-flex align-items-center gap-3">
+                                <img src="@((variant.ImageURL ?? product.ImageURL).GetFirstImageUrl())" alt="@product.Name" style="width:55px;height:55px;object-fit:cover;border-radius:8px;" />
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-truncate" style="max-width:180px;">@product.Name</div>
+                                    <div class="text-muted small">Size: @variant.Size | Color: @variant.Color</div>
+                                    <div class="text-muted small">Qty: @item.Quantity</div>
+                                </div>
+                                <div class="fw-bold">
+                                    $@((variant.Price * item.Quantity).ToString("0.00"))
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="pt-4 border-top">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal</span>
+                            <strong>$@subtotal.ToString("0.00")</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Shipping</span>
+                            <strong>$@shipping.ToString("0.00")</strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fs-5 mb-0">
+                            <span class="fw-bold">Total</span>
+                            <strong class="text-danger">$@total.ToString("0.00")</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        function selectPayment(element, method) {
+            document.querySelectorAll('.payment-option-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            if (method === 'Cash') {
+                document.getElementById('payCash').checked = true;
+            } else {
+                document.getElementById('payCard').checked = true;
+            }
+        }
+    </script>
+}

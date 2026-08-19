@@ -1,0 +1,203 @@
+@model Sportify.Models.GymAd
+
+@{
+    ViewData["Title"] = $"Manage {Model.GymName} - Sportify";
+}
+
+<style>
+    .manage-header { background: #0a0a0a; padding: 48px 0 36px; border-bottom: 3px solid #CC0000; }
+    .manage-header h1 { color:#fff; font-weight:800; }
+    .manage-header p { color:rgba(255,255,255,.7); }
+    .section-card { border:none; border-radius:20px; box-shadow:0 4px 24px rgba(0,0,0,.07); padding:32px; margin-bottom:28px; }
+    .section-label { font-size:.75rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#CC0000; margin-bottom:14px; }
+    .add-btn { background:#CC0000; color:#fff; border:none; border-radius:10px; padding:9px 22px; font-weight:700; font-size:.9rem; text-decoration:none; }
+    .add-btn:hover { background:#a80000; transform:translateY(-2px); color:#fff; }
+    .item-card { border:1.5px solid #f0f0f0; border-radius:14px; padding:18px; transition:.2s; }
+    .item-card:hover { border-color:#CC0000; box-shadow:0 4px 14px rgba(204,0,0,.1); }
+    .class-img-thumb { width:80px; height:64px; object-fit:cover; border-radius:8px; }
+    .btn-del-sm { background:transparent; color:#CC0000; border:1.5px solid #CC0000; border-radius:8px; padding:5px 12px; font-size:.8rem; }
+    .btn-del-sm:hover { background:#CC0000; color:#fff; }
+    .btn-edit-sm { background:#CC0000; color:#fff; border:none; border-radius:8px; padding:5px 12px; font-size:.8rem; text-decoration:none; }
+    .btn-edit-sm:hover { background:#a80000; color:#fff; }
+    .offer-badge { background:#CC0000; color:#fff; border-radius:14px; padding:3px 10px; font-size:.78rem; font-weight:700; }
+    .status-approved { background:#d1e7dd; color:#0a3622; border-radius:20px; padding:4px 14px; font-size:.82rem; font-weight:700; }
+    .status-pending { background:#fff3cd; color:#856404; border-radius:20px; padding:4px 14px; font-size:.82rem; font-weight:700; }
+    .empty-msg { text-align:center; padding:30px; color:#bbb; font-size:.9rem; }
+    .view-btn { background:#111; color:#fff; border:none; border-radius:10px; padding:9px 22px; font-weight:700; font-size:.9rem; text-decoration:none; }
+    .view-btn:hover { background:#CC0000; color:#fff; }
+</style>
+
+<div class="manage-header">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h1>@Model.GymName</h1>
+                <p class="mb-0">Manage your gym's profile, classes and offers</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-controller="Gym" asp-action="Profile" asp-route-id="@Model.GymAdId" class="view-btn">
+                    View Public Page
+                </a>
+                <a asp-controller="Gym" asp-action="MyAds" class="view-btn">
+                    My Ads
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        }
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+
+                <!-- ── Classes Section ───────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <div class="section-label">Gym Classes</div>
+                            <h4 class="fw-bold mb-0">Classes You Offer</h4>
+                        </div>
+                        <a asp-controller="Gym" asp-action="AddClass" asp-route-gymId="@Model.GymAdId" class="add-btn">Add Class</a>
+                    </div>
+
+                    @if (Model.GymClasses == null || !Model.GymClasses.Any())
+                    {
+                        <div class="empty-msg">No classes yet. Add your first class!</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var cls in Model.GymClasses)
+                            {
+                                var imgs = (cls.ImageURLs ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
+                                <div class="item-card d-flex align-items-start gap-3">
+                                    @if (imgs.Any())
+                                    {
+                                        <img src="@imgs[0]" class="class-img-thumb" alt="@cls.ClassName" />
+                                    }
+                                    else
+                                    {
+                                        <div class="class-img-thumb d-flex align-items-center justify-content-center" style="background:#f0f0f0;font-size:1rem;color:#aaa;">IMG</div>
+                                    }
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <h6 class="fw-bold mb-1">@cls.ClassName</h6>
+                                            <div class="d-flex gap-2">
+                                                <a asp-controller="Gym" asp-action="EditClass" asp-route-id="@cls.GymClassId" class="btn-edit-sm">Edit</a>
+                                                <form asp-controller="Gym" asp-action="DeleteClass" asp-route-id="@cls.GymClassId" method="post"
+                                                      onsubmit="return confirm('Delete this class?')">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn-del-sm">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted small mb-1">@cls.Description</p>
+                                        <div class="d-flex gap-2 mt-1">
+                                            @if (!string.IsNullOrEmpty(cls.Duration)) { <span class="badge bg-light text-dark">@cls.Duration</span> }
+                                            @if (!string.IsNullOrEmpty(cls.Price)) { <span class="badge bg-light text-dark">@cls.Price</span> }
+                                            @if (imgs.Length > 1) { <span class="badge bg-light text-muted">@imgs.Length photos</span> }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- ── Offers Section ────────────────────────────────────── -->
+                <div class="section-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <div class="section-label">Promotions</div>
+                            <h4 class="fw-bold mb-0">Current Offers &amp; Deals</h4>
+                        </div>
+                        <a asp-controller="Gym" asp-action="AddOffer" asp-route-gymId="@Model.GymAdId" class="add-btn">Add Offer</a>
+                    </div>
+
+                    @if (Model.GymOffers == null || !Model.GymOffers.Any())
+                    {
+                        <div class="empty-msg">No offers yet. Attract more members with a special deal!</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var offer in Model.GymOffers)
+                            {
+                                <div class="item-card">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h6 class="fw-bold mb-0">@offer.Title</h6>
+                                            @if (!string.IsNullOrEmpty(offer.DiscountText)) { <span class="offer-badge">@offer.DiscountText</span> }
+                                        </div>
+                                        <form asp-controller="Gym" asp-action="DeleteOffer" asp-route-id="@offer.GymOfferId" method="post"
+                                              onsubmit="return confirm('Delete this offer?')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-del-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                    <p class="text-muted small mt-2 mb-1">@offer.Description</p>
+                                    @if (offer.ValidUntil.HasValue)
+                                    {
+                                        <span class="small text-muted">Valid until @offer.ValidUntil.Value.ToString("MMM d, yyyy")</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Sidebar: Quick Info -->
+            <div class="col-lg-4">
+                <div class="section-card sticky-top" style="top:100px;">
+                    <div class="section-label">Gym Status</div>
+                    <div class="mb-3">
+                        @if (Model.IsApproved)
+                        {
+                            <span class="status-approved">Live — Visible to users</span>
+                        }
+                        else
+                        {
+                            <span class="status-pending">Pending Admin Approval</span>
+                        }
+                    </div>
+
+                    <hr />
+
+                    <div class="section-label mt-3">Quick Stats</div>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Classes</span>
+                            <strong>@(Model.GymClasses?.Count ?? 0)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Active Offers</span>
+                            <strong>@(Model.GymOffers?.Count(o => !o.ValidUntil.HasValue || o.ValidUntil > DateTime.UtcNow) ?? 0)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Listed Since</span>
+                            <strong>@Model.CreatedAt.ToString("MMM d, yyyy")</strong>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <a asp-controller="Gym" asp-action="Edit" asp-route-id="@Model.GymAdId"
+                       class="btn btn-outline-dark w-100 rounded-3 fw-semibold py-2 mt-2">
+                        Edit Gym Info
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

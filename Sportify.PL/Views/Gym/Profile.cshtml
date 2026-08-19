@@ -1,0 +1,227 @@
+@model Sportify.Models.GymAd
+@using Microsoft.AspNetCore.Http
+
+@{
+    ViewData["Title"] = $"{Model.GymName} - Sportify Gyms";
+    var images = (Model.ImageURL ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
+    var userRole = Context.Session.GetString("UserRole");
+}
+
+<style>
+    .gym-hero {
+        position: relative;
+        height: 420px;
+        overflow: hidden;
+        background: #0a0a0a;
+    }
+    .gym-hero-img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        opacity: .45;
+    }
+    .gym-hero-content {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        padding: 40px;
+        background: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 100%);
+        color: #fff;
+    }
+    .gym-hero-content h1 { font-size: 2.6rem; font-weight: 800; }
+    .gym-hero-badge { background: #CC0000; color: #fff; border-radius: 20px; padding: 4px 14px; font-size:.85rem; font-weight:700; }
+    .info-pill {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #f8f9fa; border-radius: 24px; padding: 8px 18px;
+        font-size: .9rem; color: #444; margin: 4px;
+    }
+    .section-title { font-size: 1.5rem; font-weight: 800; color: #111; border-left: 4px solid #CC0000; padding-left: 14px; }
+    .class-card { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.08); overflow: hidden; transition: transform .2s; }
+    .class-card:hover { transform: translateY(-4px); }
+    .class-img-carousel { height: 200px; object-fit: cover; }
+    .offer-card { border: none; border-radius: 16px; background: linear-gradient(135deg, #fff9f0, #fff3e0); box-shadow: 0 4px 20px rgba(0,0,0,.07); padding: 28px; }
+    .offer-badge { background: #CC0000; color: #fff; border-radius: 20px; padding: 5px 16px; font-size: .85rem; font-weight: 800; }
+    .offer-valid { font-size: .8rem; color: #888; }
+    .contact-card { background: #0a0a0a; color: #fff; border-radius: 20px; padding: 36px; }
+    .contact-card a { color: #ff9999; }
+    .manage-btn { background: linear-gradient(135deg, #CC0000, #ff4444); color: #fff; border: none; border-radius: 12px; padding: 10px 24px; font-weight: 700; text-decoration: none; }
+    .manage-btn:hover { color: #fff; transform: translateY(-2px); }
+</style>
+
+<!-- Hero -->
+<div class="gym-hero">
+    @if (images.Any())
+    {
+        <img src="@images[0]" alt="@Model.GymName" class="gym-hero-img" />
+    }
+    <div class="gym-hero-content">
+        <span class="gym-hero-badge mb-2 d-inline-block">Verified Gym</span>
+        <h1>@Model.GymName</h1>
+        <p class="mb-0 opacity-75">@Model.Description</p>
+    </div>
+</div>
+
+<!-- Quick Info Pills -->
+<div class="bg-white py-4 border-bottom shadow-sm">
+    <div class="container d-flex flex-wrap gap-1 align-items-center justify-content-between">
+        <div>
+            <span class="info-pill"><svg width="16" height="16" fill="none" stroke="#CC0000" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> @Model.Location</span>
+            <span class="info-pill"><svg width="16" height="16" fill="none" stroke="#CC0000" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.14 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.05 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 18z"/></svg> @Model.ContactNumber</span>
+            @if (!string.IsNullOrEmpty(Model.WorkingHours))
+            {
+                <span class="info-pill"> @Model.WorkingHours</span>
+            }
+            @if (!string.IsNullOrEmpty(Model.Website))
+            {
+                <span class="info-pill"> <a href="@Model.Website" target="_blank" class="text-decoration-none text-dark">@Model.Website</a></span>
+            }
+        </div>
+        @if (userRole == "GymOwner" && Model.UserID == Context.Session.GetInt32("UserID"))
+        {
+            <a asp-controller="Gym" asp-action="ManageProfile" asp-route-gymId="@Model.GymAdId" class="manage-btn">
+                 Manage My Gym Page
+            </a>
+        }
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-8">
+
+                <!-- About -->
+                @if (!string.IsNullOrEmpty(Model.AboutUs))
+                {
+                    <div class="mb-5">
+                        <h2 class="section-title mb-4">About Us</h2>
+                        <p class="text-secondary" style="line-height:1.9; font-size:1rem;">@Model.AboutUs</p>
+                    </div>
+                }
+
+                <!-- Gallery -->
+                @if (images.Length > 1)
+                {
+                    <div class="mb-5">
+                        <h2 class="section-title mb-4">Gallery</h2>
+                        <div class="row g-2">
+                            @foreach (var img in images)
+                            {
+                                <div class="col-md-4">
+                                    <img src="@img" class="img-fluid rounded-3" style="height:160px;width:100%;object-fit:cover;" alt="@Model.GymName" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Classes -->
+                @if (Model.GymClasses != null && Model.GymClasses.Any())
+                {
+                    <div class="mb-5">
+                        <h2 class="section-title mb-4">🏋️ Classes We Offer</h2>
+                        <div class="row g-4">
+                            @foreach (var cls in Model.GymClasses)
+                            {
+                                var classImgs = (cls.ImageURLs ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
+                                <div class="col-md-6">
+                                    <div class="class-card card h-100">
+                                        @if (classImgs.Any())
+                                        {
+                                            <div id="carousel-@cls.GymClassId" class="carousel slide" data-bs-ride="carousel">
+                                                <div class="carousel-inner">
+                                                    @for (int i = 0; i < classImgs.Length; i++)
+                                                    {
+                                                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                            <img src="@classImgs[i]" class="d-block w-100 class-img-carousel" alt="@cls.ClassName" />
+                                                        </div>
+                                                    }
+                                                </div>
+                                                @if (classImgs.Length > 1)
+                                                {
+                                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-@cls.GymClassId" data-bs-slide="prev">
+                                                        <span class="carousel-control-prev-icon"></span>
+                                                    </button>
+                                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-@cls.GymClassId" data-bs-slide="next">
+                                                        <span class="carousel-control-next-icon"></span>
+                                                    </button>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div style="height:200px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:3rem;">🏋️</div>
+                                        }
+                                        <div class="card-body p-4">
+                                            <h5 class="fw-bold">@cls.ClassName</h5>
+                                            <p class="text-muted small mb-2">@cls.Description</p>
+                                            <div class="d-flex gap-3 mt-2">
+                                                @if (!string.IsNullOrEmpty(cls.Duration))
+                                                {
+                                                    <span class="badge bg-light text-dark fw-semibold">⏱ @cls.Duration</span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(cls.Price))
+                                                {
+                                                    <span class="badge bg-light text-dark fw-semibold">💰 @cls.Price</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Offers -->
+                @if (Model.GymOffers != null && Model.GymOffers.Any())
+                {
+                    <div class="mb-5">
+                        <h2 class="section-title mb-4"> Current Offers</h2>
+                        <div class="row g-4">
+                            @foreach (var offer in Model.GymOffers)
+                            {
+                                <div class="col-md-6">
+                                    <div class="offer-card h-100">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="fw-bold mb-0">@offer.Title</h5>
+                                            @if (!string.IsNullOrEmpty(offer.DiscountText))
+                                            {
+                                                <span class="offer-badge">@offer.DiscountText</span>
+                                            }
+                                        </div>
+                                        <p class="text-secondary mb-3">@offer.Description</p>
+                                        @if (offer.ValidUntil.HasValue)
+                                        {
+                                            var isExpired = offer.ValidUntil < DateTime.UtcNow;
+                                            <span class="offer-valid @(isExpired ? "text-danger" : "")">
+                                                @(isExpired ? "⚠️ Expired" : $"⏳ Valid until {offer.ValidUntil:MMM d, yyyy}")
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Sidebar: Contact -->
+            <div class="col-lg-4">
+                <div class="contact-card mb-4 sticky-top" style="top:100px;">
+                    <h4 class="fw-bold mb-4 text-white">📞 Contact Us</h4>
+                    <p class="mb-2"><strong>Phone:</strong><br /><span class="opacity-75">@Model.ContactNumber</span></p>
+                    <p class="mb-2"><strong>Location:</strong><br /><span class="opacity-75">@Model.Location</span></p>
+                    @if (!string.IsNullOrEmpty(Model.WorkingHours))
+                    {
+                        <p class="mb-2"><strong>Working Hours:</strong><br /><span class="opacity-75">@Model.WorkingHours</span></p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Website))
+                    {
+                        <p class="mb-2"><strong>Website:</strong><br /><a href="@Model.Website" target="_blank" class="text-info">@Model.Website</a></p>
+                    }
+                    <hr class="border-light my-4" />
+                    <p class="opacity-60 small mb-0">Listed since @Model.CreatedAt.ToString("MMMM yyyy")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

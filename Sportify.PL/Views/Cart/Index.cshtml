@@ -1,0 +1,161 @@
+@model List<CartItem>
+
+@{
+    ViewData["Title"] = "My Cart";
+
+    decimal subtotal = Model.Sum(item =>
+        item.ProductVariant.Price * item.Quantity);
+
+    decimal shipping = subtotal > 0 && subtotal < 100 ? 10 : 0;
+    decimal total = subtotal + shipping;
+}
+
+<section class="container py-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <span class="text-uppercase text-muted fw-bold">Sportify</span>
+            <h1 class="fw-bold mt-2">My Cart</h1>
+        </div>
+
+        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-dark">
+            Continue Shopping
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 bg-light rounded">
+            <h3 class="fw-bold">Your cart is empty</h3>
+            <p class="text-muted">Start shopping and add your favorite products.</p>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-dark">
+                Shop Now
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Variant</th>
+                                <th>Price</th>
+                                <th style="width:160px;">Quantity</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var variant = item.ProductVariant;
+                                var product = variant.Product;
+                                var itemTotal = variant.Price * item.Quantity;
+
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@((variant.ImageURL ?? product.ImageURL).GetFirstImageUrl())"
+                                                 alt="@product.Name"
+                                                 style="width:72px;height:72px;object-fit:cover;border-radius:8px;" />
+
+                                            <div>
+                                                <div class="fw-bold">@product.Name</div>
+                                                <div class="text-muted small">@product.Brand?.Name</div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div>Size: @variant.Size</div>
+                                        <div class="text-muted small">Color: @variant.Color</div>
+                                    </td>
+
+                                    <td>@variant.Price.ToString("0.00")</td>
+
+                                    <td>
+                                        <form asp-action="Update" method="post" class="d-flex gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productVariantId" value="@variant.ProductVariantId" />
+                                            <input type="number"
+                                                   name="quantity"
+                                                   value="@item.Quantity"
+                                                   min="1"
+                                                   max="@variant.StockQuantity"
+                                                   class="form-control form-control-sm" />
+                                            <button type="submit" class="btn btn-sm btn-outline-dark">
+                                                Update
+                                            </button>
+                                        </form>
+                                    </td>
+
+                                    <td class="fw-bold">@itemTotal.ToString("0.00")</td>
+
+                                    <td class="text-end">
+                                        <form asp-action="Remove" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productVariantId" value="@variant.ProductVariantId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Remove
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <form asp-action="Clear" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger">
+                        Clear Cart
+                    </button>
+                </form>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4">Order Summary</h4>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal</span>
+                            <strong>@subtotal.ToString("0.00")</strong>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping</span>
+                            <strong>@shipping.ToString("0.00")</strong>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between fs-5 mb-4">
+                            <span class="fw-bold">Total</span>
+                            <strong>@total.ToString("0.00")</strong>
+                        </div>
+
+                        <a asp-controller="Orders" asp-action="Checkout" class="btn btn-dark w-100 d-flex align-items-center justify-content-center" style="height: 52px; border-radius: 14px; font-weight: 700;">
+                            Proceed to Checkout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</section>
