@@ -1,6 +1,6 @@
-# JobNest
+# Sportify
 
-An E-commerce project for sports equipments built with ASP.NET Core MVC.
+An E-commerce project for sports equipment built with ASP.NET Core MVC.
 
 ## 🚀 Live Demo
 
